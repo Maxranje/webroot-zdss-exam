@@ -51,10 +51,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { ElMessage } from "element-plus";
+import { ref, reactive } from "vue";
+import { ElMessage, FormInstance } from "element-plus";
 import { useAuthStore } from "@/stores/auth";
-import { useResetPasswordForm } from "@/composables/useForm";
+import { ResetPasswordParams } from "@/types/auth";
 
 const emit = defineEmits<{
     switchToLogin: [];
@@ -63,7 +63,39 @@ const emit = defineEmits<{
 const authStore = useAuthStore();
 const loading = ref(false);
 
-const { resetFormRef, resetForm, resetRules, validateResetForm, resetResetForm } = useResetPasswordForm();
+const resetFormRef = ref<FormInstance>();
+const resetForm = reactive<ResetPasswordParams>({
+    username: "",
+    oldPassword: "",
+    newPassword: "",
+});
+
+const resetRules = {
+    username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
+    oldPassword: [{ required: true, message: "请输入旧密码", trigger: "blur" }],
+    newPassword: [
+        { required: true, message: "请输入新密码", trigger: "blur" },
+        { min: 6, message: "新密码长度至少6位", trigger: "blur" },
+    ],
+};
+
+const validateResetForm = async (): Promise<boolean> => {
+    if (!resetFormRef.value) return false;
+
+    try {
+        await resetFormRef.value.validate();
+        return true;
+    } catch {
+        return false;
+    }
+};
+
+const resetResetForm = () => {
+    resetForm.username = "";
+    resetForm.oldPassword = "";
+    resetForm.newPassword = "";
+    resetFormRef.value?.clearValidate();
+};
 
 // 修改密码处理
 const handleResetPassword = async () => {

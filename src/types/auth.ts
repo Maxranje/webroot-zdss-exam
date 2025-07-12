@@ -1,40 +1,41 @@
 export interface LoginParams {
-  username: string
-  password: string
+    username: string;
+    password: string;
 }
 
 export interface ResetPasswordParams {
-  username: string
-  oldPassword: string
-  newPassword: string
+    username: string;
+    oldPassword: string;
+    newPassword: string;
 }
 
 export interface UserInfo {
-  nickname: string
-  phone: string
-  type: number
-  uid: number
-  avatar: string
+    nickname: string;
+    phone: string;
+    type: number;
+    uid: number;
+    avatar: string;
 }
 
 export interface LoginResponse {
-  status: number
-  msg: string
-  data: {
-    user: UserInfo
-    auth_token: string
-  }
+    status: number;
+    msg: string;
+    data: {
+        user: UserInfo;
+        auth_token: string;
+        redirect?: string;
+    };
 }
 
 export interface AuthState {
-  isLoggedIn: boolean
-  userInfo: UserInfo | null
-  token: string | null
-  loading: boolean
+    isLoggedIn: boolean;
+    userInfo: UserInfo | null;
+    token: string | null;
+    loading: boolean;
 }
 
 export interface ApiResponse<T = any> {
-  status: number
-  msg: string
-  data: T
-} 
+    status: number;
+    msg: string;
+    data: T;
+}

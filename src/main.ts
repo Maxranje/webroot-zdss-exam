@@ -28,7 +28,7 @@ app.use(ElementPlus);
 const initApp = async () => {
     try {
         // 初始化认证状态
-        const { useAuthStore } = await import("./stores/auth");
+        const { useAuthStore } = await import("./stores/index");
         const authStore = useAuthStore();
         authStore.initAuth();
 

@@ -1,7 +1,7 @@
 <template>
     <div class="login-form-wrapper">
         <div class="login-form">
-            <h3 class="form-title">账户密码登录</h3>
+            <h3 class="form-title">账户登录</h3>
 
             <el-form ref="loginFormRef" :model="loginForm" :rules="loginRules" size="large">
                 <el-form-item prop="username">
@@ -41,11 +41,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, reactive } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { ElMessage } from "element-plus";
+import { ElMessage, FormInstance } from "element-plus";
 import { useAuthStore } from "@/stores/auth";
-import { useLoginForm } from "@/composables/useForm";
+import { LoginParams } from "@/types/auth";
 
 defineEmits<{
     switchToReset: [];
@@ -56,7 +56,27 @@ const route = useRoute();
 const authStore = useAuthStore();
 const rememberMe = ref(false);
 
-const { loginFormRef, loginForm, loginRules, validateLoginForm } = useLoginForm();
+const loginFormRef = ref<FormInstance>();
+const loginForm = reactive<LoginParams>({
+    username: "",
+    password: "",
+});
+
+const loginRules = {
+    username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
+    password: [{ required: true, message: "请输入密码", trigger: "blur" }],
+};
+
+const validateLoginForm = async (): Promise<boolean> => {
+    if (!loginFormRef.value) return false;
+
+    try {
+        await loginFormRef.value.validate();
+        return true;
+    } catch {
+        return false;
+    }
+};
 
 // 登录处理
 const handleLogin = async () => {
@@ -70,11 +90,8 @@ const handleLogin = async () => {
         });
 
         if (result.success) {
-            ElMessage.success("登录成功");
-
             // 获取重定向路径
-            const redirectPath = (route.query.redirect as string) || "/profile";
-            router.push(redirectPath);
+            router.push(result.redirect || "/profile");
         } else {
             ElMessage.error(result.message || "登录失败，请检查用户名和密码");
         }

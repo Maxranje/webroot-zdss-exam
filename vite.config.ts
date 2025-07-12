@@ -21,7 +21,9 @@ export default defineConfig({
         },
     },
     server: {
-        port: 3000,
+        host: "127.0.0.1",
+        port: 3777,
+        strictPort: true, // 强制使用指定端口，如果端口被占用则报错
         open: true,
         proxy: {
             "/napi": {

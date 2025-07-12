@@ -29,7 +29,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import LoginForm from "./components/LoginForm.vue";
-import ResetPasswordForm from "./components/ResetPasswordForm.vue";
+import ResetPasswordForm from "./components/ResetPassForm.vue";
 
 // 控制显示登录还是修改密码表单
 const isResetPassword = ref(false);

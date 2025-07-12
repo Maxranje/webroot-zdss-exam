@@ -19,6 +19,9 @@ yarn.lock
 # 忽略配置文件
 **/.env
 **/.env.local
+.gitignore
+.gitkeep
+.editorconfig
 
 # 忽略IDE相关文件
 .vscode/

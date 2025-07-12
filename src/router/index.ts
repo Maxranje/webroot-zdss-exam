@@ -27,6 +27,24 @@ const router = createRouter({
             },
         },
         {
+            path: "/platform", // 管理员查看效果
+            name: "Platform",
+            component: () => import("@/views/Profile/MainView.vue"),
+            meta: {
+                requiresAuth: true,
+                title: "个人中心",
+            },
+        },
+        {
+            path: "/details", // 教师效果
+            name: "Details",
+            component: () => import("@/views/Profile/MainView.vue"),
+            meta: {
+                requiresAuth: true,
+                title: "个人中心",
+            },
+        },
+        {
             path: "/mock",
             name: "Mock",
             component: () => import("@/views/Mock/ExamView.vue"),
