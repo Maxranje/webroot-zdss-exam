@@ -1,65 +1,80 @@
 <template>
     <div class="abroad-service-container">
+        <!-- 加载状态 -->
+        <div v-if="loading" class="loading-container">
+            <el-icon class="loading-icon">
+                <Loading />
+            </el-icon>
+            <p>正在加载留学服务...</p>
+        </div>
+
+        <!-- 空状态 -->
+        <div v-else-if="!abroadplans.length" class="empty-state">
+            <div class="empty-icon">
+                <el-icon>
+                    <Document />
+                </el-icon>
+            </div>
+            <h3>暂无留学服务</h3>
+            <p>您还没有任何留学服务记录</p>
+            <el-button type="primary" @click="refreshData">刷新数据</el-button>
+        </div>
+
         <!-- 服务列表页面 -->
-        <div v-if="!selectedService" class="service-list">
+        <div v-else-if="!selectedService" class="service-list">
             <div class="page-header">
                 <h2>我的留学服务</h2>
                 <p>查看您的留学服务进度和详情</p>
             </div>
-            
+
             <div class="service-cards">
                 <el-card
-                    v-for="service in services"
-                    :key="service.id"
+                    v-for="abroadplan in abroadplans"
+                    :key="abroadplan.id"
                     class="service-card"
                     shadow="hover"
-                    @click="selectService(service)">
+                    @click="selectService(abroadplan)">
                     <div class="service-header">
                         <div class="service-title">
-                            <h3>{{ service.name }}</h3>
-                            <el-tag :type="getServiceStatusType(service.status)" size="small">
-                                {{ service.status }}
+                            <h3>{{ abroadplan.name }}</h3>
+                            <el-tag :type="getServiceStatusType(abroadplan.status)" size="small">
+                                {{ getServiceStatusName(abroadplan.status) }}
                             </el-tag>
                         </div>
                         <div class="service-progress">
                             <el-progress
-                                :percentage="service.progress"
-                                :color="getProgressColor(service.progress)"
+                                :percentage="abroadplan.progress"
+                                :color="getProgressColor(abroadplan.progress)"
                                 :stroke-width="6"
                                 text-inside
-                                :show-text="false"
-                            />
-                            <span class="progress-text">{{ service.progress }}%</span>
+                                :show-text="false" />
+                            <span class="progress-text">{{ abroadplan.progress }}%</span>
                         </div>
                     </div>
-                    
+
                     <div class="service-info">
                         <div class="info-item">
-                            <el-icon><Calendar /></el-icon>
-                            <span>开始时间：{{ service.startDate }}</span>
-                        </div>
-                        <div class="info-item">
-                            <el-icon><Timer /></el-icon>
-                            <span>完成时间：{{ service.estimatedEnd }}</span>
-                        </div>
-                        <div class="info-item">
                             <el-icon><User /></el-icon>
-                            <span>服务学管：{{ service.teacher }}</span>
+                            <span>服务学管：{{ abroadplan.operator }}</span>
+                        </div>
+                        <div class="info-item">
+                            <el-icon><Calendar /></el-icon>
+                            <span>开始时间：{{ abroadplan.startDate }}</span>
                         </div>
                     </div>
-                    
+
                     <div class="service-stats">
                         <div class="stat-item">
-                            <span class="stat-number">{{ service.completedTasks }}</span>
-                            <span class="stat-label">已完成</span>
+                            <span class="stat-number">{{ abroadplan.completedTasks }}</span>
+                            <span class="stat-label">已核对项</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">{{ service.totalTasks }}</span>
-                            <span class="stat-label">总任务</span>
+                            <span class="stat-number">{{ abroadplan.totalTasks }}</span>
+                            <span class="stat-label">总检查项</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">{{ service.pendingTasks }}</span>
-                            <span class="stat-label">待完成</span>
+                            <span class="stat-number">{{ abroadplan.pendingTasks }}</span>
+                            <span class="stat-label">待核对项</span>
                         </div>
                     </div>
                 </el-card>
@@ -68,18 +83,20 @@
 
         <!-- 服务详情页面 -->
         <div v-else class="service-detail">
+            <div v-if="!selectedService.name" class="error-state">
+                <el-alert
+                    title="数据错误"
+                    description="服务数据不完整，请刷新页面重试"
+                    type="error"
+                    show-icon
+                    :closable="false" />
+            </div>
             <div class="detail-header">
-                <el-button
-                    @click="selectedService = null"
-                    :icon="ArrowLeft"
-                    circle
-                    size="large"
-                    class="back-btn"
-                />
+                <el-button @click="selectedService = null" :icon="ArrowLeft" circle size="large" class="back-btn" />
                 <div class="service-info-header">
-                    <h2>{{ selectedService.name }}</h2>
+                    <h2>{{ selectedService.name || "未知服务" }}</h2>
                     <el-tag :type="getServiceStatusType(selectedService.status)">
-                        {{ selectedService.status }}
+                        {{ getServiceStatusName(selectedService.status) }}
                     </el-tag>
                 </div>
             </div>
@@ -93,22 +110,23 @@
                             <span class="progress-percentage">{{ selectedService.progress }}%</span>
                         </div>
                     </template>
-                    
+
                     <div class="progress-detail">
                         <el-progress
                             :percentage="selectedService.progress"
                             :color="getProgressColor(selectedService.progress)"
                             :stroke-width="8"
-                            :show-text="false"
-                        />
+                            :show-text="false" />
                         <div class="progress-info">
                             <div class="info-row">
                                 <span>已完成任务：</span>
-                                <span class="highlight">{{ selectedService.completedTasks }}/{{ selectedService.totalTasks }}</span>
+                                <span class="highlight">
+                                    {{ selectedService.completedTasks }}/{{ selectedService.totalTasks }}
+                                </span>
                             </div>
                             <div class="info-row">
                                 <span>服务老师：</span>
-                                <span>{{ selectedService.teacher }}</span>
+                                <span>{{ selectedService.operator }}</span>
                             </div>
                             <div class="info-row">
                                 <span>开始时间：</span>
@@ -123,17 +141,23 @@
                     <template #header>
                         <div class="card-header">
                             <span>任务清单</span>
-                            <el-button type="text" @click="expandAll = !expandAll">
-                                {{ expandAll ? '收起全部' : '展开全部' }}
-                            </el-button>
+                            <el-button
+                                class="expand-all-btn"
+                                link
+                                @click="toggleExpandAll"
+                                :icon="!expandAll ? TurnOff : Open" />
                         </div>
                     </template>
-                    
+
                     <div class="checklist-content">
-                        <el-collapse v-model="activeCollapse" accordion>
+                        <div v-if="!hasChecklist" class="empty-checklist">
+                            <p>暂无任务清单数据</p>
+                        </div>
+
+                        <el-collapse v-else v-model="activeCollapse" accordion>
                             <el-collapse-item
+                                :icon="CaretRight"
                                 v-for="category in selectedService.checklist"
-                                :key="category.id"
                                 :name="category.id"
                                 :title="category.title"
                                 class="checklist-category">
@@ -141,25 +165,15 @@
                                     <div class="category-header">
                                         <span class="category-title">{{ category.title }}</span>
                                         <div class="category-progress">
-                                            <el-progress
-                                                :percentage="getCategoryProgress(category)"
-                                                :color="getProgressColor(getCategoryProgress(category))"
-                                                :stroke-width="4"
-                                                :show-text="false"
-                                                size="small"
-                                            />
                                             <span class="category-progress-text">
-                                                {{ getCompletedItemsCount(category) }}/{{ category.items.length }}
+                                                {{ getCompletedItemsProgress(category) }}
                                             </span>
                                         </div>
                                     </div>
                                 </template>
-                                
+
                                 <div class="checklist-items">
-                                    <div
-                                        v-for="item in category.items"
-                                        :key="item.id"
-                                        class="checklist-item">
+                                    <div v-for="item in category.items || []" :key="item.key" class="checklist-item">
                                         <div class="item-content">
                                             <div class="item-header">
                                                 <span class="item-title">{{ item.title }}</span>
@@ -171,20 +185,20 @@
                                                         text
                                                         @click="downloadFile(item)"
                                                         :icon="Download">
-                                                        下载
+                                                        下载附件
                                                     </el-button>
                                                 </div>
                                             </div>
-                                            
+
                                             <div class="item-description" v-if="item.description">
                                                 {{ item.description }}
                                             </div>
-                                            
+
                                             <div class="item-checkboxes">
                                                 <!-- 老师操作的复选框 -->
                                                 <div class="checkbox-item teacher-checkbox">
                                                     <el-checkbox
-                                                        v-model="item.teacherCompleted"
+                                                        :model-value="item.teacherCompleted == 1"
                                                         disabled
                                                         size="large">
                                                         <span class="checkbox-label">
@@ -194,21 +208,26 @@
                                                             </el-icon>
                                                         </span>
                                                     </el-checkbox>
-                                                    <div
-                                                        v-if="item.teacherCompleted"
-                                                        class="completion-info">
-                                                        <span class="completion-time">{{ item.teacherCompletedTime }}</span>
-                                                        <span class="completion-by">由 {{ item.teacherCompletedBy }} 确认</span>
+                                                    <div v-if="item.teacherCompleted == 1" class="completion-info">
+                                                        <span class="completion-time">
+                                                            {{ item.teacherCompletedTime }}
+                                                        </span>
+                                                        <span class="completion-by">
+                                                            由 {{ item.teacherCompletedBy }} 确认
+                                                        </span>
                                                     </div>
                                                 </div>
-                                                
+
                                                 <!-- 学生操作的复选框 -->
                                                 <div class="checkbox-item student-checkbox">
                                                     <el-checkbox
-                                                        v-model="item.studentCompleted"
-                                                        :disabled="item.studentCompleted"
+                                                        :model-value="item.studentCompleted == 1"
+                                                        :disabled="
+                                                            item.studentCompleted == 1 ||
+                                                            (selectedService.status != 1 && selectedService.status != 4)
+                                                        "
                                                         size="large"
-                                                        @change="handleStudentCheck(item)">
+                                                        @change="handleStudentCheck(selectedService, item)">
                                                         <span class="checkbox-label">
                                                             学生确认
                                                             <el-icon class="confirm-icon">
@@ -216,10 +235,10 @@
                                                             </el-icon>
                                                         </span>
                                                     </el-checkbox>
-                                                    <div
-                                                        v-if="item.studentCompleted"
-                                                        class="completion-info">
-                                                        <span class="completion-time">{{ item.studentCompletedTime }}</span>
+                                                    <div v-if="item.studentCompleted == 1" class="completion-info">
+                                                        <span class="completion-time">
+                                                            {{ item.studentCompletedTime }}
+                                                        </span>
                                                         <span class="completion-by">双方确认完成</span>
                                                     </div>
                                                 </div>
@@ -237,33 +256,36 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ref, watch, onMounted, computed, inject } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { CaretRight, Grid, Open, Operation, TurnOff } from "@element-plus/icons-vue";
+import { useAuthStore } from "@/stores/auth";
 import {
     Calendar,
-    Timer,
     User,
     ArrowLeft,
     Download,
     InfoFilled,
-    CircleCheck
-} from '@element-plus/icons-vue';
+    CircleCheck,
+    Loading,
+    Document,
+} from "@element-plus/icons-vue";
 
 // 定义接口
 interface ChecklistItem {
-    id: string;
+    key: string;
     title: string;
     description?: string;
-    teacherCompleted: boolean;
+    teacherCompleted: number;
     teacherCompletedTime?: string;
     teacherCompletedBy?: string;
-    studentCompleted: boolean;
+    studentCompleted: number;
     studentCompletedTime?: string;
     downloadUrl?: string;
 }
 
 interface ChecklistCategory {
-    id: string;
+    id: number;
     title: string;
     items: ChecklistItem[];
 }
@@ -271,214 +293,98 @@ interface ChecklistCategory {
 interface Service {
     id: number;
     name: string;
-    status: string;
+    status: number;
     progress: number;
     startDate: string;
-    estimatedEnd: string;
-    teacher: string;
+    operator: string;
     completedTasks: number;
     totalTasks: number;
     pendingTasks: number;
     checklist: ChecklistCategory[];
 }
 
+// 状态映射常量
+const STATUS_CONFIG = {
+    1: { type: "info", name: "进行中" },
+    2: { type: "success", name: "已完成" },
+    3: { type: "warning", name: "已结转" },
+    4: { type: "info", name: "进行中" },
+} as const;
+
+// 使用 auth store
+const authStore = useAuthStore();
+
+// 注入父组件提供的刷新方法
+const refreshRightContent = inject("refreshRightContent") as (() => Promise<void>) | undefined;
+
 // 响应式数据
 const selectedService = ref<Service | null>(null);
-const activeCollapse = ref<string[]>([]);
+const activeCollapse = ref<number[]>([]);
 const expandAll = ref(false);
+const loading = ref(false);
+const abroadplans = ref<Service[]>([]);
 
-// 服务列表数据
-const services = ref<Service[]>([
-    {
-        id: 1,
-        name: '美国本科申请全程服务',
-        status: '进行中',
-        progress: 65,
-        startDate: '2024-01-15',
-        estimatedEnd: '2024-08-30',
-        teacher: '李老师',
-        completedTasks: 13,
-        totalTasks: 20,
-        pendingTasks: 7,
-        checklist: [
-            {
-                id: 'academic',
-                title: '学术准备',
-                items: [
-                    {
-                        id: 'transcript',
-                        title: '成绩单认证',
-                        description: '准备并认证高中成绩单',
-                        teacherCompleted: true,
-                        teacherCompletedTime: '2024-01-20 14:30',
-                        teacherCompletedBy: '李老师',
-                        studentCompleted: true,
-                        studentCompletedTime: '2024-01-22 09:15',
-                        downloadUrl: '/files/transcript-guide.pdf'
-                    },
-                    {
-                        id: 'standardized-test',
-                        title: '标准化考试',
-                        description: 'SAT/ACT考试准备和成绩提交',
-                        teacherCompleted: true,
-                        teacherCompletedTime: '2024-02-01 16:00',
-                        teacherCompletedBy: '李老师',
-                        studentCompleted: false,
-                        downloadUrl: '/files/test-prep-guide.pdf'
-                    },
-                    {
-                        id: 'language-test',
-                        title: '语言考试',
-                        description: 'TOEFL/IELTS考试准备',
-                        teacherCompleted: false,
-                        studentCompleted: false,
-                        downloadUrl: '/files/language-test-guide.pdf'
-                    }
-                ]
-            },
-            {
-                id: 'application',
-                title: '申请材料',
-                items: [
-                    {
-                        id: 'personal-statement',
-                        title: '个人陈述',
-                        description: '撰写个人陈述和申请文书',
-                        teacherCompleted: true,
-                        teacherCompletedTime: '2024-02-15 10:30',
-                        teacherCompletedBy: '李老师',
-                        studentCompleted: false,
-                        downloadUrl: '/files/ps-template.pdf'
-                    },
-                    {
-                        id: 'recommendation',
-                        title: '推荐信',
-                        description: '获取推荐信',
-                        teacherCompleted: false,
-                        studentCompleted: false
-                    },
-                    {
-                        id: 'portfolio',
-                        title: '作品集',
-                        description: '准备专业作品集（如适用）',
-                        teacherCompleted: false,
-                        studentCompleted: false
-                    }
-                ]
-            },
-            {
-                id: 'visa',
-                title: '签证申请',
-                items: [
-                    {
-                        id: 'visa-form',
-                        title: '签证表格',
-                        description: '填写DS-160表格',
-                        teacherCompleted: false,
-                        studentCompleted: false,
-                        downloadUrl: '/files/visa-guide.pdf'
-                    },
-                    {
-                        id: 'visa-interview',
-                        title: '签证面试',
-                        description: '参加签证面试',
-                        teacherCompleted: false,
-                        studentCompleted: false
-                    }
-                ]
-            }
-        ]
-    },
-    {
-        id: 2,
-        name: '英国硕士申请服务',
-        status: '已完成',
-        progress: 100,
-        startDate: '2023-09-01',
-        estimatedEnd: '2024-03-31',
-        teacher: '王老师',
-        completedTasks: 15,
-        totalTasks: 15,
-        pendingTasks: 0,
-        checklist: [
-            {
-                id: 'preparation',
-                title: '前期准备',
-                items: [
-                    {
-                        id: 'university-selection',
-                        title: '院校选择',
-                        description: '选择合适的大学和专业',
-                        teacherCompleted: true,
-                        teacherCompletedTime: '2023-09-15 11:00',
-                        teacherCompletedBy: '王老师',
-                        studentCompleted: true,
-                        studentCompletedTime: '2023-09-20 15:30'
-                    }
-                ]
-            }
-        ]
-    },
-    {
-        id: 3,
-        name: '加拿大本科申请服务',
-        status: '待开始',
-        progress: 0,
-        startDate: '2024-03-01',
-        estimatedEnd: '2024-12-31',
-        teacher: '张老师',
-        completedTasks: 0,
-        totalTasks: 18,
-        pendingTasks: 18,
-        checklist: [
-            {
-                id: 'initial',
-                title: '初步准备',
-                items: [
-                    {
-                        id: 'consultation',
-                        title: '初步咨询',
-                        description: '了解申请流程和要求',
-                        teacherCompleted: false,
-                        studentCompleted: false
-                    }
-                ]
-            }
-        ]
-    }
-]);
+// 计算属性
+const hasChecklist = computed(() => {
+    console.log(selectedService.value?.checklist);
+    return Boolean(selectedService.value?.checklist?.length);
+});
 
-// 计算属性和方法
-const getServiceStatusType = (status: string) => {
-    switch (status) {
-        case '进行中':
-            return 'warning';
-        case '已完成':
-            return 'success';
-        case '待开始':
-            return 'info';
-        default:
-            return 'info';
+// 获取留学服务列表
+const fetchAbroadPlans = async () => {
+    loading.value = true;
+    try {
+        const response = await authStore.fetchAuthReq("/napi/abroadplan/lists", "GET");
+        if (response.status === 0) {
+            abroadplans.value = response.data.list || [];
+        } else {
+            ElMessage.error(response.msg || "获取留学服务列表失败");
+        }
+    } catch (error) {
+        abroadplans.value = [];
+        ElMessage.error("获取留学服务列表失败");
+    } finally {
+        loading.value = false;
     }
+};
+
+// 刷新数据
+const refreshData = () => {
+    fetchAbroadPlans();
+};
+
+// 工具方法
+const getServiceStatusType = (status: number) => {
+    return STATUS_CONFIG[status as keyof typeof STATUS_CONFIG]?.type || "info";
+};
+
+const getServiceStatusName = (status: number) => {
+    return STATUS_CONFIG[status as keyof typeof STATUS_CONFIG]?.name || "进行中";
 };
 
 const getProgressColor = (progress: number) => {
-    if (progress >= 80) return '#67c23a';
-    if (progress >= 50) return '#e6a23c';
-    return '#409eff';
+    if (progress >= 80) return "#67c23a";
+    if (progress >= 50) return "#e6a23c";
+    return "#409eff";
 };
 
 const getCategoryProgress = (category: ChecklistCategory) => {
-    const completedItems = category.items.filter(item => 
-        item.teacherCompleted && item.studentCompleted
+    if (!category?.items?.length) return 0;
+    const completedItems = category.items.filter(
+        item => item.teacherCompleted == 1 && item.studentCompleted == 1
     ).length;
-    return category.items.length > 0 ? Math.round((completedItems / category.items.length) * 100) : 0;
+    return Math.round((completedItems / category.items.length) * 100);
 };
 
-const getCompletedItemsCount = (category: ChecklistCategory) => {
-    return category.items.filter(item => 
-        item.teacherCompleted && item.studentCompleted
-    ).length;
+const getCompletedItemsProgress = (category: ChecklistCategory) => {
+    if (!category?.items?.length) return "0%";
+    return (
+        Math.round(
+            (category.items.filter(item => item.teacherCompleted == 1 && item.studentCompleted == 1).length /
+                category.items.length) *
+                100
+        ) + "%"
+    );
 };
 
 const selectService = (service: Service) => {
@@ -486,184 +392,303 @@ const selectService = (service: Service) => {
     activeCollapse.value = [];
 };
 
-const handleStudentCheck = async (item: ChecklistItem) => {
-    if (item.studentCompleted) {
-        try {
-            await ElMessageBox.confirm(
-                '确认完成此任务吗？确认后将无法修改。',
-                '确认操作',
-                {
-                    confirmButtonText: '确认',
-                    cancelButtonText: '取消',
-                }
-            );
-            
-            // 模拟API调用
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            // 设置完成时间
+const handleStudentCheck = async (service: Service, item: ChecklistItem) => {
+    if (item.studentCompleted == 1) {
+        return; // 已经确认过，不允许重复操作
+    }
+    if (service.status != 1 && service.status != 4) {
+        ElMessage.error("非有效状态，无法确认");
+        return;
+    }
+
+    // 检查 key 是否存在
+    if (!item.key || !service.id) {
+        ElMessage.error("任务标识缺失，无法确认");
+        return;
+    }
+
+    try {
+        await ElMessageBox.confirm("确认完成此任务吗？确认后将无法修改。", "确认操作", {
+            confirmButtonText: "确认",
+            cancelButtonText: "取消",
+        });
+
+        // 调用真实的 API
+        const result = await authStore.fetchAuthReq("/napi/abroadplan/check", "POST", {
+            key: item.key,
+            service_id: service.id,
+        });
+
+        if (result.status === 0) {
+            // 更新本地状态
             item.studentCompletedTime = new Date().toLocaleString();
-            
-            // 更新服务进度
+            item.studentCompleted = 1;
             updateServiceProgress();
-            
-            ElMessage.success('任务确认成功');
-        } catch {
-            // 用户取消，恢复checkbox状态
-            item.studentCompleted = false;
+            ElMessage.success("确认成功");
+
+            // 刷新右侧组件的 summary 数据
+            if (refreshRightContent) {
+                await refreshRightContent();
+            }
+        } else {
+            ElMessage.error(result.msg || "任务确认失败");
         }
+    } catch (error) {
+        if (error === "cancel") {
+            // 用户取消操作，不需要显示错误信息
+            return;
+        }
+        console.error("任务确认失败:", error);
+        ElMessage.error("任务确认失败，请重试");
     }
 };
 
 const updateServiceProgress = () => {
-    if (selectedService.value) {
-        const allItems = selectedService.value.checklist.flatMap(category => category.items);
-        const completedItems = allItems.filter(item => 
-            item.teacherCompleted && item.studentCompleted
-        ).length;
-        
-        selectedService.value.progress = allItems.length > 0 
-            ? Math.round((completedItems / allItems.length) * 100) 
-            : 0;
-        selectedService.value.completedTasks = completedItems;
-        selectedService.value.pendingTasks = allItems.length - completedItems;
-    }
+    if (!selectedService.value?.checklist) return;
+
+    const allItems = selectedService.value.checklist
+        .filter(category => category?.items?.length)
+        .flatMap(category => category.items);
+    const completedItems = allItems.filter(item => item.teacherCompleted == 1 && item.studentCompleted == 1).length;
+
+    selectedService.value.progress = allItems.length > 0 ? Math.round((completedItems / allItems.length) * 100) : 0;
+    selectedService.value.completedTasks = completedItems;
+    selectedService.value.pendingTasks = allItems.length - completedItems;
 };
 
 const downloadFile = (item: ChecklistItem) => {
+    if (!item.downloadUrl) {
+        ElMessage.warning("下载链接不可用");
+        return;
+    }
     ElMessage.info(`正在下载：${item.title}`);
-    // 实际项目中这里应该是真实的下载逻辑
-    window.open(item.downloadUrl, '_blank');
+    window.open(item.downloadUrl, "_blank");
 };
 
-// 监听展开全部状态
-watch(expandAll, (newVal) => {
-    if (selectedService.value) {
-        activeCollapse.value = newVal 
-            ? selectedService.value.checklist.map(cat => cat.id)
-            : [];
+const toggleExpandAll = () => {
+    expandAll.value = !expandAll.value;
+    if (selectedService.value?.checklist?.length) {
+        activeCollapse.value = expandAll.value ? selectedService.value.checklist.map(cat => cat.id) : [];
+        console.log(activeCollapse.value);
+    } else {
+        activeCollapse.value = [];
     }
+};
+
+// 组件挂载时获取数据
+onMounted(() => {
+    fetchAbroadPlans();
 });
 </script>
 
 <style scoped lang="scss">
+// 变量定义
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$text-primary: #303133;
+$text-regular: #606266;
+$text-secondary: #909399;
+$border-color: #e4e7ed;
+$bg-light: #f8f9fa;
+$bg-lighter: #fafbfc;
+
 .abroad-service-container {
     padding: 20px;
     height: 100%;
     overflow-y: auto;
 }
 
+// 通用样式
+.loading-container,
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.loading-container {
+    height: 300px;
+    color: $text-regular;
+
+    .loading-icon {
+        font-size: 48px;
+        color: $primary-color;
+        margin-bottom: 16px;
+        animation: spin 1s linear infinite;
+    }
+
+    p {
+        font-size: 15px;
+        margin: 0;
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.error-state {
+    margin-bottom: 20px;
+}
+
+.empty-state {
+    height: 400px;
+
+    .empty-icon {
+        width: 120px;
+        height: 120px;
+        margin-bottom: 24px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .el-icon {
+            font-size: 48px;
+            color: #c0c4cc;
+        }
+    }
+
+    h3 {
+        margin: 0 0 12px 0;
+        font-size: 22px;
+        color: $text-primary;
+        font-weight: 600;
+    }
+
+    p {
+        margin: 0 0 32px 0;
+        color: $text-secondary;
+        font-size: 15px;
+        line-height: 1.5;
+    }
+
+    .el-button {
+        padding: 12px 24px;
+        font-size: 15px;
+    }
+}
+
 // 服务列表样式
 .service-list {
     .page-header {
         margin-bottom: 32px;
-        
+
         h2 {
             margin: 0 0 8px 0;
-            color: #303133;
-            font-size: 28px;
+            color: $text-primary;
+            font-size: 24px;
             font-weight: 600;
         }
-        
+
         p {
             margin: 0;
-            color: #909399;
-            font-size: 16px;
+            color: $text-secondary;
+            font-size: 15px;
         }
     }
-    
+
     .service-cards {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
         gap: 24px;
     }
-    
+
     .service-card {
         cursor: pointer;
         transition: all 0.3s ease;
-        border: 1px solid #e4e7ed;
-        
+        border: 1px solid $border-color;
+
         &:hover {
             transform: translateY(-4px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-            border-color: #409eff;
+            border-color: $primary-color;
         }
-        
+
         :deep(.el-card__body) {
             padding: 24px;
         }
-        
+
         .service-header {
             margin-bottom: 20px;
-            
+
             .service-title {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
                 margin-bottom: 16px;
-                
+
                 h3 {
                     margin: 0;
-                    font-size: 20px;
+                    font-size: 18px;
                     font-weight: 600;
-                    color: #303133;
+                    color: $text-primary;
                 }
             }
-            
+
             .service-progress {
                 display: flex;
                 align-items: center;
                 gap: 12px;
-                
+
                 .el-progress {
                     flex: 1;
                 }
-                
+
                 .progress-text {
                     font-weight: 600;
-                    color: #409eff;
+                    color: $primary-color;
                 }
             }
         }
-        
+
         .service-info {
             margin-bottom: 20px;
-            
+
             .info-item {
                 display: flex;
                 align-items: center;
                 gap: 8px;
                 margin-bottom: 8px;
-                color: #606266;
+                color: $text-regular;
                 font-size: 14px;
-                
+
                 .el-icon {
-                    color: #909399;
+                    color: $text-secondary;
                 }
             }
         }
-        
+
         .service-stats {
             display: flex;
             justify-content: space-between;
             padding: 16px;
-            background: #f8f9fa;
+            background: $bg-light;
             border-radius: 8px;
-            
+
             .stat-item {
                 text-align: center;
-                
+
                 .stat-number {
                     display: block;
-                    font-size: 24px;
+                    font-size: 22px;
                     font-weight: 700;
-                    color: #409eff;
+                    color: $primary-color;
                     margin-bottom: 4px;
                 }
-                
+
                 .stat-label {
-                    font-size: 12px;
-                    color: #909399;
+                    font-size: 13px;
+                    color: $text-secondary;
                 }
             }
         }
@@ -677,98 +702,112 @@ watch(expandAll, (newVal) => {
         align-items: center;
         gap: 16px;
         margin-bottom: 24px;
-        
+
         .back-btn {
-            color: #409eff;
-            border-color: #409eff;
-            
+            color: $primary-color;
+            border-color: $primary-color;
+
             &:hover {
-                background: #409eff;
+                background: $primary-color;
                 color: white;
             }
         }
-        
+
         .service-info-header {
             display: flex;
             align-items: center;
             gap: 12px;
-            
+
             h2 {
                 margin: 0;
-                font-size: 24px;
+                font-size: 22px;
                 font-weight: 600;
-                color: #303133;
+                color: $text-primary;
             }
         }
     }
-    
+
     .detail-content {
         display: flex;
         flex-direction: column;
         gap: 24px;
     }
-    
-    .progress-card {
+
+    .progress-card,
+    .checklist-card {
         .card-header {
+            font-weight: 600;
+            font-size: 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            
-            .progress-percentage {
-                font-size: 18px;
-                font-weight: 600;
-                color: #409eff;
-            }
         }
-        
+        .expand-all-btn {
+            font-size: 20px;
+        }
+    }
+
+    .progress-card {
+        .progress-percentage {
+            font-size: 16px;
+            font-weight: 600;
+            color: $primary-color;
+        }
+
         .progress-detail {
             .el-progress {
                 margin-bottom: 16px;
             }
-            
+
             .progress-info {
                 display: flex;
                 flex-direction: column;
                 gap: 8px;
-                
+
                 .info-row {
                     display: flex;
                     justify-content: space-between;
-                    color: #606266;
-                    
+                    color: $text-regular;
+                    font-size: 14px;
+
                     .highlight {
-                        color: #409eff;
+                        color: $primary-color;
                         font-weight: 600;
                     }
                 }
             }
         }
     }
-    
+
     .checklist-card {
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
         .checklist-content {
+            .empty-checklist {
+                text-align: center;
+                padding: 40px 20px;
+                color: $text-secondary;
+
+                p {
+                    margin: 8px 0;
+                    font-size: 14px;
+                }
+            }
+
             :deep(.el-collapse) {
                 border: none;
-                
+
                 .el-collapse-item {
-                    border-bottom: 1px solid #e4e7ed;
-                    
+                    border-bottom: 1px solid $border-color;
+
                     &:last-child {
                         border-bottom: none;
                     }
-                    
+
                     .el-collapse-item__header {
                         padding: 16px 0;
                         border: none;
                         background: transparent;
                     }
-                    
+
                     .el-collapse-item__content {
                         padding: 0 0 16px 0;
                         border: none;
@@ -776,128 +815,128 @@ watch(expandAll, (newVal) => {
                     }
                 }
             }
-            
+
             .category-header {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
                 width: 100%;
-                
+
                 .category-title {
-                    font-size: 18px;
-                    font-weight: 600;
-                    color: #303133;
+                    font-size: 14px;
+                    color: $text-primary;
                 }
-                
+
                 .category-progress {
                     display: flex;
                     align-items: center;
                     gap: 8px;
-                    
+
                     .el-progress {
                         width: 100px;
                     }
-                    
+
                     .category-progress-text {
                         font-size: 14px;
-                        color: #606266;
+                        color: $text-regular;
                         font-weight: 500;
                     }
                 }
             }
-            
+
             .checklist-items {
                 display: flex;
                 flex-direction: column;
                 gap: 16px;
             }
-            
+
             .checklist-item {
                 padding: 20px;
-                background: #fafbfc;
+                background: $bg-lighter;
                 border-radius: 8px;
-                border: 1px solid #e4e7ed;
-                
+                border: 1px solid $border-color;
+
                 .item-content {
                     .item-header {
                         display: flex;
                         justify-content: space-between;
                         align-items: center;
                         margin-bottom: 8px;
-                        
+
                         .item-title {
-                            font-size: 16px;
+                            font-size: 14px;
                             font-weight: 600;
-                            color: #303133;
+                            color: $text-primary;
                         }
-                        
+
                         .item-actions {
                             display: flex;
                             gap: 8px;
                         }
                     }
-                    
+
                     .item-description {
                         margin-bottom: 16px;
-                        color: #606266;
-                        font-size: 14px;
-                        line-height: 1.5;
+                        color: $text-regular;
+                        font-size: 13px;
+                        line-height: 1.6;
                     }
-                    
+
                     .item-checkboxes {
                         display: flex;
                         flex-direction: column;
                         gap: 12px;
-                        
+
                         .checkbox-item {
                             display: flex;
                             flex-direction: column;
                             gap: 4px;
-                            
+
                             .checkbox-label {
                                 display: flex;
                                 align-items: center;
                                 gap: 4px;
                                 font-weight: 500;
-                                
+                                font-size: 13px;
+
                                 .info-icon {
-                                    color: #909399;
+                                    color: $text-secondary;
                                 }
-                                
+
                                 .confirm-icon {
-                                    color: #67c23a;
+                                    color: $success-color;
                                 }
                             }
-                            
+
                             .completion-info {
                                 margin-left: 24px;
                                 display: flex;
                                 flex-direction: column;
                                 gap: 2px;
-                                
+
                                 .completion-time {
-                                    font-size: 12px;
-                                    color: #909399;
+                                    font-size: 13px;
+                                    color: $text-secondary;
                                 }
-                                
+
                                 .completion-by {
-                                    font-size: 12px;
-                                    color: #67c23a;
+                                    font-size: 13px;
+                                    color: $success-color;
                                     font-weight: 500;
                                 }
                             }
-                            
+
                             &.teacher-checkbox {
                                 :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
-                                    background-color: #409eff;
-                                    border-color: #409eff;
+                                    background-color: $primary-color;
+                                    border-color: $primary-color;
                                 }
                             }
-                            
+
                             &.student-checkbox {
                                 :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
-                                    background-color: #67c23a;
-                                    border-color: #67c23a;
+                                    background-color: $success-color;
+                                    border-color: $success-color;
                                 }
                             }
                         }
@@ -913,63 +952,85 @@ watch(expandAll, (newVal) => {
     .abroad-service-container {
         padding: 16px;
     }
-    
+
     .service-cards {
         grid-template-columns: 1fr !important;
         gap: 16px !important;
     }
-    
+
     .service-card {
         :deep(.el-card__body) {
             padding: 16px !important;
         }
-        
+
         .service-header {
             margin-bottom: 16px !important;
-            
+
             .service-title {
                 flex-direction: column;
                 align-items: flex-start !important;
                 gap: 8px;
             }
         }
-        
+
         .service-stats {
             padding: 12px !important;
-            
+
             .stat-item {
                 .stat-number {
-                    font-size: 20px !important;
+                    font-size: 18px !important;
                 }
             }
         }
     }
-    
+
     .service-detail {
         .detail-header {
             flex-direction: column;
             align-items: flex-start !important;
             gap: 12px !important;
-            
+
             .service-info-header {
                 h2 {
-                    font-size: 20px !important;
+                    font-size: 18px !important;
                 }
             }
         }
-        
+
         .checklist-item {
             padding: 16px !important;
-            
+
             .item-header {
                 flex-direction: column !important;
                 align-items: flex-start !important;
                 gap: 8px !important;
             }
-            
+
             .item-checkboxes {
                 gap: 8px !important;
             }
+        }
+    }
+
+    .empty-state {
+        height: 300px !important;
+
+        .empty-icon {
+            width: 80px !important;
+            height: 80px !important;
+            margin-bottom: 16px !important;
+
+            .el-icon {
+                font-size: 32px !important;
+            }
+        }
+
+        h3 {
+            font-size: 18px !important;
+        }
+
+        p {
+            font-size: 14px !important;
         }
     }
 }

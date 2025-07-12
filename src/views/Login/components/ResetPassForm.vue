@@ -31,7 +31,7 @@
                 <el-form-item>
                     <div class="form-options">
                         <span></span>
-                        <el-link type="primary" :underline="false" @click="$emit('switchToLogin')">去登录</el-link>
+                        <el-link type="primary" underline="never" @click="$emit('switchToLogin')">去登录</el-link>
                     </div>
                 </el-form-item>
 
@@ -71,11 +71,29 @@ const resetForm = reactive<ResetPasswordParams>({
 });
 
 const resetRules = {
-    username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
-    oldPassword: [{ required: true, message: "请输入旧密码", trigger: "blur" }],
+    username: [
+        { required: true, message: "请输入用户名", trigger: "blur" },
+        {
+            pattern: /^[0-9a-zA-Z,]{1,20}$/,
+            message: "用户名只能包含数字、英文或逗号，1-20个字符以内",
+            trigger: "blur",
+        },
+    ],
+    oldPassword: [
+        { required: true, message: "请输入旧密码", trigger: "blur" },
+        {
+            pattern: /^[0-9a-zA-Z,]{6,20}$/,
+            message: "旧密码只能包含数字、英文或逗号，6-20个字符以内",
+            trigger: "blur",
+        },
+    ],
     newPassword: [
         { required: true, message: "请输入新密码", trigger: "blur" },
-        { min: 6, message: "新密码长度至少6位", trigger: "blur" },
+        {
+            pattern: /^[0-9a-zA-Z,]{6,20}$/,
+            message: "新密码只能包含数字、英文或逗号，6-20个字符以内",
+            trigger: "blur",
+        },
     ],
 };
 

@@ -21,7 +21,7 @@
                 <el-form-item>
                     <div class="form-options">
                         <el-checkbox v-model="rememberMe">记住用户名</el-checkbox>
-                        <el-link type="primary" :underline="false" @click="$emit('switchToReset')">修改密码</el-link>
+                        <el-link type="primary" underline="never" @click="$emit('switchToReset')">修改密码</el-link>
                     </div>
                 </el-form-item>
 
@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage, FormInstance } from "element-plus";
 import { useAuthStore } from "@/stores/auth";
@@ -56,6 +56,9 @@ const route = useRoute();
 const authStore = useAuthStore();
 const rememberMe = ref(false);
 
+// 记住用户名相关的 localStorage key
+const REMEMBER_USERNAME_KEY = "remember-username";
+
 const loginFormRef = ref<FormInstance>();
 const loginForm = reactive<LoginParams>({
     username: "",
@@ -63,8 +66,41 @@ const loginForm = reactive<LoginParams>({
 });
 
 const loginRules = {
-    username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
-    password: [{ required: true, message: "请输入密码", trigger: "blur" }],
+    username: [
+        { required: true, message: "请输入用户名", trigger: "blur" },
+        {
+            pattern: /^[0-9a-zA-Z,]{1,20}$/,
+            message: "用户名只能包含数字、英文或逗号，1-20个字符以内",
+            trigger: "blur",
+        },
+    ],
+    password: [
+        { required: true, message: "请输入密码", trigger: "blur" },
+        {
+            pattern: /^[0-9a-zA-Z,]{6,20}$/,
+            message: "密码只能包含数字、英文或逗号，6-20个字符以内",
+            trigger: "blur",
+        },
+    ],
+};
+
+// 初始化时恢复保存的用户名
+onMounted(() => {
+    const savedUsername = localStorage.getItem(REMEMBER_USERNAME_KEY);
+    if (savedUsername) {
+        loginForm.username = savedUsername;
+        rememberMe.value = true;
+    }
+});
+
+// 保存用户名到 localStorage
+const saveUsername = (username: string) => {
+    localStorage.setItem(REMEMBER_USERNAME_KEY, username);
+};
+
+// 清除保存的用户名
+const clearSavedUsername = () => {
+    localStorage.removeItem(REMEMBER_USERNAME_KEY);
 };
 
 const validateLoginForm = async (): Promise<boolean> => {
@@ -90,6 +126,13 @@ const handleLogin = async () => {
         });
 
         if (result.success) {
+            // 处理记住用户名功能
+            if (rememberMe.value) {
+                saveUsername(loginForm.username);
+            } else {
+                clearSavedUsername();
+            }
+
             // 获取重定向路径
             router.push(result.redirect || "/profile");
         } else {

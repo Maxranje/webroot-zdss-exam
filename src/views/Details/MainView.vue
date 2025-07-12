@@ -13,25 +13,9 @@
                         :ellipsis="false"
                         @select="handleMenuSelect">
                         <el-menu-item index="schedule" class="main-menu-item">排课中心</el-menu-item>
-                        <el-menu-item index="abroad" class="main-menu-item">留学中心</el-menu-item>
-                        <el-menu-item index="exam" class="main-menu-item">模考中心</el-menu-item>
                         <el-sub-menu index="info">
                             <template #title><el-avatar :size="36" :src="userInfo.avatar" /></template>
                             <!-- 移动端菜单项 -->
-                            <el-menu-item
-                                index="mobile-abroad"
-                                class="mobile-menu-item"
-                                @click="handleMenuSelect('abroad')">
-                                <el-icon><School /></el-icon>
-                                留学中心
-                            </el-menu-item>
-                            <el-menu-item
-                                index="mobile-exam"
-                                class="mobile-menu-item"
-                                @click="handleMenuSelect('exam')">
-                                <el-icon><Document /></el-icon>
-                                模考中心
-                            </el-menu-item>
                             <el-menu-item
                                 index="mobile-schedule"
                                 class="mobile-menu-item"
@@ -60,17 +44,6 @@
                     </el-col>
 
                     <el-col :span="24" :lg="6" class="content-right">
-                        <!-- 用户信息卡片 -->
-                        <el-card class="user-info-card" shadow="hover">
-                            <div class="user-avatar">
-                                <el-avatar :size="60" :src="userInfo.avatar" />
-                            </div>
-                            <div class="user-details">
-                                <h3>{{ userInfo.nickname }}</h3>
-                                <p class="user-subtitle">{{ userInfo.school }} / {{ userInfo.grade }}</p>
-                            </div>
-                        </el-card>
-
                         <!-- 动态右侧内容组件 -->
                         <div class="content-right-body">
                             <component :is="rightComponent" ref="rightComponentRef" />
@@ -83,95 +56,115 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, provide } from "vue";
+import { ref, computed, provide } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useAuthStore } from "@/stores/auth";
 
 // 导入子组件
-import ExamLeftContent from "@/views/Profile/components/ExamLeftContent.vue";
-import ExamRightContent from "@/views/Profile/components/ExamRightContent.vue";
-import AbroadLeftContent from "@/views/Profile/components/AbroadLeftContent.vue";
-import AbroadRightContent from "@/views/Profile/components/AbroadRightContent.vue";
-import ScheduleLeftContent from "@/views/Profile/components/ScheduleLeftContent.vue";
-import ScheduleRightContent from "@/views/Profile/components/ScheduleRightContent.vue";
+import ScheduleLeftContent from "@/views/Details/components/ScheduleLeftContent.vue";
+import ScheduleRightContent from "@/views/Details/components/ScheduleRightContent.vue";
 
-const router = useRouter();
-const authStore = useAuthStore();
+// 常量定义
+const MENU_KEYS = {
+    SCHEDULE: "schedule",
+    MOBILE_SCHEDULE: "mobile-schedule",
+    LOGOUT: "logout",
+} as const;
 
-// 响应式数据
-const activeMenu = ref("schedule");
-const rightComponentRef = ref();
-
-// 用户信息
-const userInfo = computed(() => {
-    return {
-        avatar: authStore.userInfo?.avatar || "https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png",
-        nickname: authStore.userInfo?.nickname || "同学",
-        school: authStore.userInfo?.school || "-",
-        grade: authStore.userInfo?.graduate || "-",
-    };
-});
-
-// 刷新右侧组件数据的方法
-const refreshRightContent = async () => {
-    try {
-        if (rightComponentRef.value?.refreshSummary) {
-            await rightComponentRef.value.refreshSummary();
-        }
-    } catch (error) {
-        console.error("刷新右侧内容失败:", error);
-    }
-};
-
-// 通过 provide 提供刷新方法
-provide("refreshRightContent", refreshRightContent);
+const DEFAULT_AVATAR = "https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png";
 
 // 组件映射配置
-const componentMap: Record<string, any> = {
-    abroad: {
-        left: AbroadLeftContent,
-        right: AbroadRightContent,
-    },
-    exam: {
-        left: ExamLeftContent,
-        right: ExamRightContent,
-    },
-    schedule: {
+const COMPONENT_MAP: Record<string, { left: any; right: any }> = {
+    [MENU_KEYS.SCHEDULE]: {
         left: ScheduleLeftContent,
         right: ScheduleRightContent,
     },
 };
 
-// 计算当前显示的组件
-const leftComponent = computed(() => {
-    return componentMap[activeMenu.value]?.left || ExamLeftContent;
-});
+// 组合式函数
+const useMainView = () => {
+    const router = useRouter();
+    const authStore = useAuthStore();
 
-const rightComponent = computed(() => {
-    return componentMap[activeMenu.value]?.right || ExamRightContent;
-});
+    // 响应式数据
+    const activeMenu = ref<string>(MENU_KEYS.SCHEDULE);
+    const rightComponentRef = ref();
 
-// 方法
-const handleMenuSelect = (key: string) => {
-    // 更新当前激活的菜单项，组件会通过计算属性自动切换左右内容
-    activeMenu.value = key;
+    // 用户信息
+    const userInfo = computed(() => ({
+        avatar: authStore.userInfo?.avatar || DEFAULT_AVATAR,
+        nickname: authStore.userInfo?.nickname || "老师",
+        school: authStore.userInfo?.school || "-",
+        grade: authStore.userInfo?.graduate || "-",
+    }));
+
+    // 计算当前显示的组件
+    const leftComponent = computed(
+        () => COMPONENT_MAP[activeMenu.value as keyof typeof COMPONENT_MAP]?.left || ScheduleLeftContent
+    );
+
+    const rightComponent = computed(
+        () => COMPONENT_MAP[activeMenu.value as keyof typeof COMPONENT_MAP]?.right || ScheduleRightContent
+    );
+
+    // 刷新右侧组件数据的方法
+    const refreshRightContent = async () => {
+        try {
+            if (rightComponentRef.value?.refreshSummary) {
+                await rightComponentRef.value.refreshSummary();
+            }
+        } catch (error) {
+            console.error("刷新右侧内容失败:", error);
+        }
+    };
+
+    // 方法
+    const handleMenuSelect = (key: string) => {
+        activeMenu.value = key;
+    };
+
+    const handleLogout = async () => {
+        try {
+            await ElMessageBox.confirm("确定要退出登录吗？", "提示", {
+                confirmButtonText: "确定",
+                cancelButtonText: "取消",
+                type: "warning",
+            });
+
+            await authStore.logout(router);
+            ElMessage.success("退出成功");
+        } catch {
+            // 用户取消登出
+        }
+    };
+
+    return {
+        activeMenu,
+        rightComponentRef,
+        userInfo,
+        leftComponent,
+        rightComponent,
+        refreshRightContent,
+        handleMenuSelect,
+        handleLogout,
+    };
 };
 
-const handleLogout = async () => {
-    try {
-        await ElMessageBox.confirm("确定要退出登录吗？", "提示", {
-            confirmButtonText: "确定",
-            cancelButtonText: "取消",
-            type: "warning",
-        });
+// 使用组合式函数
+const {
+    activeMenu,
+    rightComponentRef,
+    userInfo,
+    leftComponent,
+    rightComponent,
+    refreshRightContent,
+    handleMenuSelect,
+    handleLogout,
+} = useMainView();
 
-        await authStore.logout(router);
-        ElMessage.success("退出成功");
-    } catch {
-        // 用户取消登出
-    }
-};
+// 通过 provide 提供刷新方法
+provide("refreshRightContent", refreshRightContent);
 </script>
 
 <style scoped lang="scss">

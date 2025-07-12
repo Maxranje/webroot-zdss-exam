@@ -17,6 +17,7 @@ const router = createRouter({
                 title: "用户登录",
             },
         },
+        // 合并所有指向个人中心的路由
         {
             path: "/profile",
             name: "Profile",
@@ -27,21 +28,21 @@ const router = createRouter({
             },
         },
         {
-            path: "/platform", // 管理员查看效果
+            path: "/platform",
             name: "Platform",
-            component: () => import("@/views/Profile/MainView.vue"),
+            component: () => import("@/views/Platform/MainView.vue"),
             meta: {
                 requiresAuth: true,
-                title: "个人中心",
+                title: "管理平台",
             },
         },
         {
-            path: "/details", // 教师效果
+            path: "/details",
             name: "Details",
-            component: () => import("@/views/Profile/MainView.vue"),
+            component: () => import("@/views/Details/MainView.vue"),
             meta: {
                 requiresAuth: true,
-                title: "个人中心",
+                title: "教师详情",
             },
         },
         {
@@ -56,14 +57,18 @@ const router = createRouter({
         {
             path: "/:pathMatch(.*)*",
             name: "NotFound",
-            redirect: "/login",
+            component: () => import("@/views/Error/404View.vue"),
+            meta: {
+                requiresAuth: false,
+                title: "页面未找到",
+            },
         },
     ],
 });
 
-// 注册路由守卫
+// 注册路由守卫 - 调整顺序：先设置标题，再检查登录状态，最后验证权限
 router.beforeEach(titleGuard);
-router.beforeEach(authGuard);
 router.beforeEach(loginGuard);
+router.beforeEach(authGuard);
 
 export default router;

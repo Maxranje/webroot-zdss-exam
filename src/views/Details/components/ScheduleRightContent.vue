@@ -46,7 +46,7 @@
                     </div>
                     <div class="course-info">
                         <h5>{{ course.title }}</h5>
-                        <p class="teacher">{{ course.teacher }}</p>
+                        <p class="teacher">{{ course.name }}</p>
                     </div>
                     <div class="course-status">
                         <el-tag :type="course.isSoon == 1 ? 'warning' : 'info'" size="small">
@@ -71,69 +71,123 @@ import { ref, onMounted } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { ElMessage } from "element-plus";
 
-// 定义课程类型
+// 类型定义
 interface Course {
     title: string;
+    name: string;
     teacher: string;
     time: string;
     date: string;
     isSoon: number;
 }
-// 排课统计数据
-interface scheduleStats {
+
+interface ScheduleStats {
     lastMonthTotal: string;
     currentMonthTotal: string;
     nextMonthTotal: string;
     weekScheduleList: Course[];
 }
 
-// 获取认证 store
-const authStore = useAuthStore();
+interface ApiResponse {
+    status: number;
+    data: {
+        last_month_total?: string;
+        current_month_total?: string;
+        next_month_total?: string;
+        week_schedule_list?: Array<{
+            title: string;
+            teacher: string;
+            time: string;
+            date: string;
+            is_soon: number;
+        }>;
+    };
+    msg?: string;
+}
 
-// 加载状态
-const loadingScheduleStats = ref(false);
+// 常量定义
+const COURSE_STATUS = {
+    SOON: 1,
+    PENDING: 0,
+} as const;
 
-// 预先定义
-
-const scheduleStats = ref<scheduleStats>({
-    lastMonthTotal: "",
-    currentMonthTotal: "",
-    nextMonthTotal: "",
+const DEFAULT_STATS: ScheduleStats = {
+    lastMonthTotal: "-",
+    currentMonthTotal: "-",
+    nextMonthTotal: "-",
     weekScheduleList: [],
-});
-
-// 获取排课统计数据
-const fetchScheduleStats = async () => {
-    loadingScheduleStats.value = true;
-    try {
-        const result = await authStore.fetchAuthReq("/napi/schedule/summary", "GET");
-        if (result.status === 0) {
-            scheduleStats.value.lastMonthTotal = result.data.last_month_total || "-";
-            scheduleStats.value.currentMonthTotal = result.data.current_month_total || "-";
-            scheduleStats.value.nextMonthTotal = result.data.next_month_total || "-";
-            if (result.data.week_schedule_list) {
-                scheduleStats.value.weekScheduleList = result.data.week_schedule_list.map((course: any) => ({
-                    title: course.title,
-                    teacher: course.teacher,
-                    time: course.time,
-                    date: course.date,
-                    isSoon: course.is_soon,
-                }));
-            }
-        } else {
-            ElMessage.error(result.msg || "获取排课统计失败");
-        }
-    } catch (error) {
-        console.error("获取排课统计失败:", error);
-        ElMessage.error("获取排课统计失败");
-    } finally {
-        loadingScheduleStats.value = false;
-    }
 };
+
+// 组合式函数
+const useScheduleRightContent = () => {
+    const authStore = useAuthStore();
+
+    // 响应式数据
+    const loadingScheduleStats = ref(false);
+    const scheduleStats = ref<ScheduleStats>({ ...DEFAULT_STATS });
+
+    // 工具函数
+    const transformCourseData = (course: any): Course => ({
+        title: course.title,
+        name: course.teacher, // 使用 teacher 作为 name
+        teacher: course.teacher,
+        time: course.time,
+        date: course.date,
+        isSoon: course.is_soon,
+    });
+
+    const handleApiResponse = (result: ApiResponse) => {
+        if (result.status === 0) {
+            scheduleStats.value = {
+                lastMonthTotal: result.data.last_month_total || DEFAULT_STATS.lastMonthTotal,
+                currentMonthTotal: result.data.current_month_total || DEFAULT_STATS.currentMonthTotal,
+                nextMonthTotal: result.data.next_month_total || DEFAULT_STATS.nextMonthTotal,
+                weekScheduleList:
+                    result.data.week_schedule_list?.map(transformCourseData) || DEFAULT_STATS.weekScheduleList,
+            };
+        } else {
+            throw new Error(result.msg || "获取排课统计失败");
+        }
+    };
+
+    // 主要方法
+    const fetchScheduleStats = async () => {
+        loadingScheduleStats.value = true;
+        try {
+            const result = (await authStore.fetchAuthReq("/napi/schedule/tsummary", "GET")) as ApiResponse;
+            handleApiResponse(result);
+        } catch (error) {
+            console.error("获取排课统计失败:", error);
+            ElMessage.error("获取排课统计失败");
+        } finally {
+            loadingScheduleStats.value = false;
+        }
+    };
+
+    // 暴露刷新方法供父组件调用
+    const refreshSummary = async () => {
+        await fetchScheduleStats();
+    };
+
+    return {
+        loadingScheduleStats,
+        scheduleStats,
+        fetchScheduleStats,
+        refreshSummary,
+    };
+};
+
+// 使用组合式函数
+const { loadingScheduleStats, scheduleStats, fetchScheduleStats, refreshSummary } = useScheduleRightContent();
 
 // 组件挂载时获取数据
 onMounted(() => {
     fetchScheduleStats();
+});
+
+// 暴露方法给父组件
+defineExpose({
+    refreshSummary,
 });
 </script>
 

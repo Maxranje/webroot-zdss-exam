@@ -7,9 +7,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import BaseCalendar from "@/components/BaseCalendar.vue";
 import { useAuthStore } from "@/stores/auth";
+
+// 定义props接收父组件传递的参数
+interface Props {
+    type?: string;
+    selectedId?: string;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+    type: "",
+    selectedId: "",
+});
 
 // 定义日历事件的类型
 interface CalendarEvent {
@@ -26,7 +37,6 @@ interface CalendarEvent {
 
 // 日历事件数据
 const calendarEvents = ref<CalendarEvent[]>([]);
-const defaultCalendarEvents = ref<CalendarEvent[]>([]);
 
 // BaseCalendar 实例引用
 const baseCalendar = ref<InstanceType<typeof BaseCalendar> | null>(null);
@@ -34,66 +44,97 @@ const baseCalendar = ref<InstanceType<typeof BaseCalendar> | null>(null);
 // 获取auth store
 const authStore = useAuthStore();
 
+// 监听props变化，当类型或选中ID变化时重新获取数据
+watch(
+    () => [props.type, props.selectedId],
+    ([newType, newSelectedId], [oldType, oldSelectedId]) => {
+        // 只有当类型和选中ID都有值时才获取数据
+        if (newType && newSelectedId && (newType !== oldType || newSelectedId !== oldSelectedId)) {
+            console.log("Props变化，重新获取数据:", { newType, newSelectedId });
+            fetchCalendarData();
+        }
+    },
+    { immediate: false }
+);
+
 // 获取日历数据的函数
-const fetchCalendarData = async () => {
+const fetchCalendarData = async (forceType?: string, forceSelectedId?: string) => {
+    // 如果没有传递强制参数，使用props中的值
+    const type = forceType || props.type;
+    const selectedId = forceSelectedId || props.selectedId;
+
+    // 如果没有类型或选中ID，不执行请求
+    if (!type || !selectedId) {
+        console.log("缺少必要参数，跳过数据获取");
+        return;
+    }
+
     try {
         // 获取当前日历的可视范围
-        let startDate: string, endDate: string;
-
-        const calendarApi = baseCalendar.value?.getApi();
-        if (calendarApi) {
-            const view = calendarApi.view;
-            // 格式化为 YYYY-MM-DD 格式
-            startDate = view.activeStart.toISOString().split("T")[0];
-            endDate = view.activeEnd.toISOString().split("T")[0];
-        } else {
-            // 如果日历还未初始化，使用当前月份
-            const now = new Date();
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-            startDate = startOfMonth.toISOString().split("T")[0];
-            endDate = endOfMonth.toISOString().split("T")[0];
-        }
+        const { startDate, endDate } = getCalendarDateRange();
 
         // 调用认证请求接口
-        const result = await authStore.fetchAuthReq("/napi/calendar/student", "POST", {
+        const result = await authStore.fetchAuthReq("/napi/calendar/platform", "POST", {
             start_date: startDate,
             end_date: endDate,
+            type: type,
+            selected_id: selectedId,
         });
 
         if (result.status === 0) {
             if (result.data.lists) {
                 calendarEvents.value = result.data.lists;
                 updateCalendarEvents(result.data.lists);
+                console.log("日历数据更新成功", result.data.lists);
             } else {
-                calendarEvents.value = defaultCalendarEvents.value;
-                updateCalendarEvents(calendarEvents.value);
+                calendarEvents.value = [];
+                updateCalendarEvents([]);
+                console.log("没有日历数据");
             }
         } else {
             throw new Error(result.msg || "获取日历数据失败");
         }
     } catch (error) {
         console.error("获取日历数据失败:", error);
-        // 如果接口请求失败，使用默认数据
-        calendarEvents.value = defaultCalendarEvents.value;
-        updateCalendarEvents(calendarEvents.value);
+        // 如果接口请求失败，清空数据
+        calendarEvents.value = [];
+        updateCalendarEvents([]);
     }
+};
+
+// 获取日历的可视范围
+const getCalendarDateRange = (): { startDate: string; endDate: string } => {
+    const calendarApi = baseCalendar.value?.getApi();
+    let startDate: string, endDate: string;
+    if (calendarApi) {
+        const view = calendarApi.view;
+        // 格式化为 YYYY-MM-DD 格式
+        startDate = view.activeStart.toISOString().split("T")[0];
+        endDate = view.activeEnd.toISOString().split("T")[0];
+    } else {
+        // 如果日历还未初始化，使用当前月份
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+        startDate = startOfMonth.toISOString().split("T")[0];
+        endDate = endOfMonth.toISOString().split("T")[0];
+    }
+    return { startDate, endDate };
 };
 
 // 更新日历事件
 const updateCalendarEvents = (events: CalendarEvent[]) => {
-    const calendarApi = baseCalendar.value?.getApi();
-    if (calendarApi) {
-        calendarApi.removeAllEvents();
-        calendarApi.addEventSource(events);
-    }
+    // 直接更新响应式数据，让 BaseCalendar 组件自动更新
+    calendarEvents.value = events;
 };
 
 // 处理日期变化的函数
 const handleDatesSet = (dateInfo: any) => {
-    // 当日期范围发生变化时，重新获取数据
-    fetchCalendarData();
+    // 当日期范围发生变化时，只有在有有效参数的情况下才重新获取数据
+    if (props.type && props.selectedId) {
+        fetchCalendarData();
+    }
 };
 
 // 渲染事件内容的函数
@@ -136,6 +177,13 @@ const getEventBackgroundColor = (state: number): string => {
     if (state === 3) return "#f6d5ba"; // 浅棕色
     return "#123456"; // 默认浅青色
 };
+
+// 对外暴露组件的 fetchCalendarData 方法
+defineExpose({
+    fetchCalendarData,
+    baseCalendar,
+    getCalendarDateRange,
+});
 </script>
 
 <style scoped lang="scss">

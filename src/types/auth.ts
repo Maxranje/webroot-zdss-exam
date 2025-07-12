@@ -11,10 +11,12 @@ export interface ResetPasswordParams {
 
 export interface UserInfo {
     nickname: string;
-    phone: string;
     type: number;
+    roleType: number;
     uid: number;
     avatar: string;
+    school: string;
+    graduate: string;
 }
 
 export interface LoginResponse {

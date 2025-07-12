@@ -1,41 +1,5 @@
 import type { ApiResponse } from "@/types/auth";
 
-interface HttpOptions extends RequestInit {
-    requireAuth?: boolean;
-}
-
-// 创建一个全局的 fetch 包装器
-export const createAuthenticatedFetch = (getToken: () => string | null, onUnauthorized: () => void) => {
-    return async (url: string, options: HttpOptions = {}) => {
-        const { requireAuth = true, ...fetchOptions } = options;
-        const token = getToken();
-
-        const headers: HeadersInit = {
-            "Content-Type": "application/json",
-            ...(fetchOptions.headers as Record<string, string>),
-        };
-
-        // 如果需要认证且有 token，添加到请求头
-        if (requireAuth && token) {
-            (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
-        }
-
-        const response = await fetch(url, {
-            ...fetchOptions,
-            headers,
-            credentials: "include",
-        });
-
-        // 处理 401 状态码
-        if (response.status === 401) {
-            onUnauthorized();
-            throw new Error("Unauthorized");
-        }
-
-        return response;
-    };
-};
-
 // 统一的API响应处理
 export const handleApiResponse = async <T = any>(response: Response): Promise<ApiResponse<T>> => {
     const result = await response.json();
@@ -46,6 +10,58 @@ export const handleApiResponse = async <T = any>(response: Response): Promise<Ap
 
     return result;
 };
+
+// 需要认证的API请求处理函数
+export const fetchAuthRequest = (getToken: () => string | null, onUnauthorized: () => void) => {
+    return async <T = any>(url: string, method: string, body?: any) => {
+        const token = getToken();
+
+        const headers: Record<string, string> = {
+            "Content-Type": "application/json",
+        };
+
+        // 如果有 token，添加到请求头
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(url, {
+            method,
+            headers,
+            body: body ? JSON.stringify(body) : undefined,
+            credentials: "include",
+        });
+
+        // 处理 401 状态码
+        if (response.status === 401) {
+            onUnauthorized();
+            throw new Error("Unauthorized");
+        }
+
+        return handleApiResponse<T>(response);
+    }
+};
+
+// 普通的API请求处理函数（不需要认证）
+export const fetchApiRequest = async <T = any>(
+    url: string,
+    method: string,
+    body?: any
+): Promise<ApiResponse<T>> => {
+    const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+    };
+
+    const response = await fetch(url, {
+        method,
+        headers,
+        credentials: "include",
+        body: body ? JSON.stringify(body) : undefined,
+    });
+
+    return handleApiResponse<T>(response);
+};
+
 
 // 存储相关工具函数
 export const storage = {

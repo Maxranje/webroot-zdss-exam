@@ -1,9 +1,8 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import type { Router } from "vue-router";
-import type { LoginParams, UserInfo, LoginResponse, ApiResponse } from "@/types/auth";
-import { createAuthenticatedFetch, handleApiResponse, storage } from "@/utils/http";
-import { use } from "echarts/core";
+import type { LoginParams, UserInfo, LoginResponse } from "@/types/auth";
+import { storage, fetchAuthRequest, fetchApiRequest } from "@/utils/http";
 
 const STORAGE_KEYS = {
     TOKEN: "auth-token",
@@ -11,25 +10,28 @@ const STORAGE_KEYS = {
     IS_LOGGED_IN: "is-logged-in",
 } as const;
 
-const VALIDATE_INTERVAL = 2 * 60 * 60 * 1000; // 2小时缓存时间
+const VALIDATE_INTERVAL = 30 * 60 * 1000; // 2小时缓存时间
 
 export const useAuthStore = defineStore("auth", () => {
     // 状态
-    const isLoggedIn = ref(false);
     const userInfo = ref<UserInfo | null>(null);
     const token = ref<string | null>(null);
     const loading = ref(false);
-    const lastValidateTime = ref(0);
+
+    // 用简单变量替代响应式状态
+    let lastValidateTime = 0;
 
     // 计算属性
+    const isLoggedIn = computed(() => !!token.value);
     const hasToken = computed(() => !!token.value);
 
     // 用户类型 12: 学生 13: 老师, 11:管理员
     const getUserType = computed(() => {
-        if (userInfo.value) {
-            return userInfo.value.type;
-        }
-        return 0;
+        return userInfo.value?.type || 0;
+    });
+    // 用户角色类型 0: 老师 1: 管理员
+    const getUserRoleType = computed(() => {
+        return userInfo.value?.roleType || 0;
     });
 
     // 处理认证失败的函数
@@ -37,40 +39,44 @@ export const useAuthStore = defineStore("auth", () => {
         logout();
     };
 
-    // 创建带认证的 fetch 实例
-    const authenticatedFetch = createAuthenticatedFetch(() => token.value, handleUnauthorized);
+    // 定义 auht请求方法
+    const fetchAuthReq = (url: string, method: string, body?: any) => {
+        return fetchAuthRequest(() => token.value, handleUnauthorized)(url, method, body);
+    };
 
-    // 初始化认证状态（从localStorage恢复）
-    const initAuth = () => {
+    // 从localStorage恢复认证状态
+    const restoreAuthFromStorage = () => {
         const storedToken = storage.get<string>(STORAGE_KEYS.TOKEN);
         const storedUserInfo = storage.get<UserInfo>(STORAGE_KEYS.USER_INFO);
         const storedIsLoggedIn = storage.get<string>(STORAGE_KEYS.IS_LOGGED_IN);
-
-        if (storedToken && storedUserInfo && storedIsLoggedIn === "true") {
+        // 修复：storedIsLoggedIn 可能是数字 1 或字符串 "1"，使用 == 进行比较
+        if (storedToken && storedUserInfo && storedIsLoggedIn == "1") {
             token.value = storedToken;
             userInfo.value = storedUserInfo;
-            isLoggedIn.value = true;
+            console.log("restoreAuthFromStorage - 认证状态恢复成功");
+            return true;
         }
+
+        console.log("restoreAuthFromStorage - 认证状态恢复失败");
+        return false;
     };
 
     // 保存认证状态到localStorage
     const saveAuthState = (authToken: string, user: UserInfo) => {
         token.value = authToken;
         userInfo.value = user;
-        isLoggedIn.value = true;
-        lastValidateTime.value = 0; // 重置验证缓存
+        lastValidateTime = Date.now(); // 重置验证缓存
 
         storage.set(STORAGE_KEYS.TOKEN, authToken);
         storage.set(STORAGE_KEYS.USER_INFO, user);
-        storage.set(STORAGE_KEYS.IS_LOGGED_IN, "true");
+        storage.set(STORAGE_KEYS.IS_LOGGED_IN, "1");
     };
 
     // 清除认证状态
     const clearAuthState = () => {
-        isLoggedIn.value = false;
         userInfo.value = null;
         token.value = null;
-        lastValidateTime.value = 0;
+        lastValidateTime = 0;
 
         storage.remove(STORAGE_KEYS.TOKEN);
         storage.remove(STORAGE_KEYS.USER_INFO);
@@ -82,21 +88,12 @@ export const useAuthStore = defineStore("auth", () => {
         loading.value = true;
 
         try {
-            const response = await fetch("/napi/sign/in", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify(params),
-            });
-
-            const result: LoginResponse = await handleApiResponse(response);
+            const result: LoginResponse = await fetchApiRequest("/napi/sign/in", "POST", params);
 
             if (result.status === 0) {
                 saveAuthState(result.data.auth_token, result.data.user);
                 return { success: true, redirect: result.data.redirect || "/profile" };
-            } else if (result.status === 405){
+            } else if (result.status === 405) {
                 return { success: false, message: result.msg || "登录失败" };
             } else {
                 return { success: false, message: "登录失败, 请重试" };
@@ -119,14 +116,7 @@ export const useAuthStore = defineStore("auth", () => {
         // 调用登出接口清除服务端session
         if (currentToken) {
             try {
-                await fetch("/napi/sign/out", {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${currentToken}`,
-                        "Content-Type": "application/json",
-                    },
-                    credentials: "include",
-                });
+                await fetchAuthReq("/napi/sign/out", "POST");
             } catch (error) {
                 console.error("登出接口调用失败:", error);
             }
@@ -138,48 +128,25 @@ export const useAuthStore = defineStore("auth", () => {
         }
     };
 
-    // 检查认证状态
-    const checkAuthStatus = async (): Promise<boolean> => {
-        const storedIsLoggedIn = storage.get<string>(STORAGE_KEYS.IS_LOGGED_IN);
-        const storedToken = storage.get<string>(STORAGE_KEYS.TOKEN);
-        const storedUserInfo = storage.get<UserInfo>(STORAGE_KEYS.USER_INFO);
-
-        if (storedIsLoggedIn === "true" && storedToken && storedUserInfo) {
-            try {
-                isLoggedIn.value = true;
-                token.value = storedToken;
-                userInfo.value = storedUserInfo;
-                return true;
-            } catch (e) {
-                console.error("恢复认证状态失败:", e);
-                clearAuthState();
-                return false;
-            }
-        }
-
-        return false;
+    // 检查认证状态（合并initAuth功能）
+    const checkAuthStatus = () => {
+        return restoreAuthFromStorage();
     };
 
-    // 检查是否需要验证token（基于缓存时间）
-    const shouldValidateToken = (): boolean => {
-        const now = Date.now();
-        return now - lastValidateTime.value > VALIDATE_INTERVAL;
-    };
-
-    // 验证 token 有效性（带缓存机制）
+    // 验证 token 有效性（内联缓存检查逻辑）
     const validateToken = async (forceValidate: boolean = false): Promise<boolean> => {
         if (!token.value) return false;
 
-        // 如果不是强制验证且还在缓存期内，直接返回true
-        if (!forceValidate && !shouldValidateToken()) {
+        // 检查是否需要验证（基于缓存时间）
+        const now = Date.now();
+        const shouldValidate = now - lastValidateTime > VALIDATE_INTERVAL;
+
+        if (!forceValidate && !shouldValidate) {
             return true;
         }
 
         try {
-            const response = await authenticatedFetch("/napi/sign/check", {
-                method: "GET",
-            });
-            const result: ApiResponse = await handleApiResponse(response);
+            const result = await fetchAuthReq("/napi/sign/check", "GET");
 
             if (result.status === 0) {
                 // 如果result.data.author_token && user 存在，则更新token和 user 信息
@@ -189,15 +156,15 @@ export const useAuthStore = defineStore("auth", () => {
                     storage.set(STORAGE_KEYS.TOKEN, result.data.author_token);
                     storage.set(STORAGE_KEYS.USER_INFO, result.data.user);
                 }
-                lastValidateTime.value = Date.now();
+                lastValidateTime = Date.now();
                 return true;
             } else {
-                lastValidateTime.value = 0;
+                lastValidateTime = 0;
                 return false;
             }
         } catch (error) {
             console.error("Token 验证失败:", error);
-            lastValidateTime.value = 0;
+            lastValidateTime = 0;
             return false;
         }
     };
@@ -209,16 +176,7 @@ export const useAuthStore = defineStore("auth", () => {
         newPassword: string;
     }): Promise<{ success: boolean; message?: string }> => {
         try {
-            const response = await fetch("/napi/sign/reset", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify(params),
-            });
-
-            const result: ApiResponse = await handleApiResponse(response);
+            const result = await fetchApiRequest("/napi/sign/reset", "POST", params);
 
             if (result.status === 0) {
                 return { success: true };
@@ -239,16 +197,15 @@ export const useAuthStore = defineStore("auth", () => {
         loading,
         hasToken,
         getUserType,
-        lastValidateTime,
+        getUserRoleType,
 
         // 方法
-        initAuth,
         login,
         logout,
         checkAuthStatus,
-        shouldValidateToken,
         validateToken,
         resetPassword,
-        authenticatedFetch,
+        fetchAuthReq,
+        fetchApiRequest,
     };
 });

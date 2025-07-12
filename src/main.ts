@@ -30,7 +30,7 @@ const initApp = async () => {
         // 初始化认证状态
         const { useAuthStore } = await import("./stores/index");
         const authStore = useAuthStore();
-        authStore.initAuth();
+        authStore.checkAuthStatus();
 
         // 挂载应用
         app.mount("#app");
