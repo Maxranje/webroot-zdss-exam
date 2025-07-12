@@ -1,0 +1,46 @@
+{
+  "name": "exam",
+  "version": "1.0.0",
+  "description": "雅思托福在线英语考试平台",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview",
+    "format": "prettier --write .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.1",
+    "@fullcalendar/core": "^6.1.18",
+    "@fullcalendar/daygrid": "^6.1.18",
+    "@fullcalendar/interaction": "^6.1.18",
+    "@fullcalendar/list": "^6.1.18",
+    "@fullcalendar/timegrid": "^6.1.18",
+    "@fullcalendar/vue3": "^6.1.18",
+    "axios": "^1.7.9",
+    "echarts": "^5.5.1",
+    "element-plus": "^2.10.2",
+    "pinia": "^2.3.0",
+    "vue": "^3.5.17",
+    "vue-echarts": "^7.0.3",
+    "vue-router": "^4.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.7",
+    "@vitejs/plugin-vue": "^6.0.0",
+    "prettier": "^3.6.2",
+    "prettier-plugin-tailwindcss": "^0.6.13",
+    "prettier-plugin-vue": "^1.1.6",
+    "sass": "^1.77.8",
+    "typescript": "^5.8.3",
+    "unplugin-auto-import": "^0.18.2",
+    "unplugin-vue-components": "^0.27.4",
+    "vite": "^7.0.0",
+    "vue-tsc": "^2.2.10"
+  }
+}

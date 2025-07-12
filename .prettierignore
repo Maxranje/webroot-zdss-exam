@@ -1,0 +1,46 @@
+# 忽略目录
+**/node_modules/**
+**/.git/**
+**/.next/**
+**/dist/**
+**/build/**
+**/coverage/**
+
+# 忽略特定文件类型
+*.min.js
+*.min.css
+
+# 忽略特定文件
+package-lock.json
+yarn.lock
+.DS_Store
+.prettierignore
+
+# 忽略配置文件
+**/.env
+**/.env.local
+
+# 忽略IDE相关文件
+.vscode/
+.idea/
+
+# 忽略测试快照文件
+**/__snapshots__/**
+
+# 忽略自动生成的文件
+**/generated/**
+
+# 忽略文档文件
+**/*.md
+**/*.mdx
+
+# 忽略图片等二进制文件
+**/*.png
+**/*.jpg
+**/*.jpeg
+**/*.gif
+**/*.svg
+**/*.ico
+
+# 忽略日志文件
+*.log
