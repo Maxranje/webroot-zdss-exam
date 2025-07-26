@@ -46,6 +46,7 @@ import { useRouter, useRoute } from "vue-router";
 import { ElMessage, FormInstance } from "element-plus";
 import { useAuthStore } from "@/stores/auth";
 import { LoginParams } from "@/types/auth";
+import * as utils from "@/utils/http";
 
 defineEmits<{
     switchToReset: [];
@@ -132,9 +133,12 @@ const handleLogin = async () => {
             } else {
                 clearSavedUsername();
             }
-
-            // 获取重定向路径
-            router.push(result.redirect || "/profile");
+            // 如果用户是教师，则重定向到外部管理平台
+            if (authStore.userInfo && authStore.userInfo.roleType == 1) {
+                utils.redirectWindow("/mapi/dashboard/index");
+            } else {
+                router.push(result.redirect || "/profile");
+            }
         } else {
             ElMessage.error(result.message || "登录失败，请检查用户名和密码");
         }

@@ -27,7 +27,7 @@ export default defineConfig({
         open: true,
         proxy: {
             "/napi": {
-                target: "http://127.0.0.1:8070",
+                target: "http://127.0.0.1:8060",
                 changeOrigin: true,
                 secure: false,
                 rewrite: path => path.replace(/^\/napi/, "/napi"),

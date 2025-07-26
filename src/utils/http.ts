@@ -39,15 +39,11 @@ export const fetchAuthRequest = (getToken: () => string | null, onUnauthorized: 
         }
 
         return handleApiResponse<T>(response);
-    }
+    };
 };
 
 // 普通的API请求处理函数（不需要认证）
-export const fetchApiRequest = async <T = any>(
-    url: string,
-    method: string,
-    body?: any
-): Promise<ApiResponse<T>> => {
+export const fetchApiRequest = async <T = any>(url: string, method: string, body?: any): Promise<ApiResponse<T>> => {
     const headers: Record<string, string> = {
         "Content-Type": "application/json",
     };
@@ -61,7 +57,6 @@ export const fetchApiRequest = async <T = any>(
 
     return handleApiResponse<T>(response);
 };
-
 
 // 存储相关工具函数
 export const storage = {
@@ -104,4 +99,12 @@ export const storage = {
             console.error("清空存储失败:", error);
         }
     },
+};
+
+// window 重定向
+export const redirectWindow = (path: string) => {
+    // 重定向到外部管理平台
+    const currentOrigin = window.location.origin;
+    const redirectUrl = `${currentOrigin}${path}`;
+    window.location.href = redirectUrl;
 };

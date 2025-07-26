@@ -1,9 +1,9 @@
 import type { NavigationGuardNext, RouteLocationNormalized } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import * as utils from "@/utils/http";
 
 // 用户类型枚举
 enum UserType {
-    PLATFORM_USER = 11,
     STUDENT = 12,
     TEACHER = 13,
 }
@@ -32,46 +32,26 @@ const redirectToError = (to: RouteLocationNormalized, next: NavigationGuardNext)
 
 // 检查用户是否有权限访问指定路径
 const hasPermissionToPath = (userType: number, roleType: number, path: string): boolean => {
-    // 平台用户 (type=11) 只能访问 /platform
-    if (userType == UserType.PLATFORM_USER) {
-        return path == "/platform";
-    }
-
     // 学生用户 (type=12) 只能访问 /profile 和 /mock
     if (userType == UserType.STUDENT) {
         return path == "/profile" || path == "/mock";
     }
 
+    if (userType == UserType.TEACHER && roleType == RoleType.HAS_ROLE) {
+        return path == "/details" || path == "/platform";
+    }
+
     // 教师用户 (type=13) 根据角色类型判断
-    if (userType == UserType.TEACHER) {
-        // 学生角色 (roleType=0) 只能访问 /details
-        if (roleType == RoleType.NO_ROLE) {
-            return path == "/details";
-        }
-        // 教师角色 (roleType=1) 可以访问 /details 和 /platform
-        if (roleType == RoleType.HAS_ROLE) {
-            return path == "/details" || path == "/platform";
-        }
+    if (userType == UserType.TEACHER && roleType == RoleType.NO_ROLE) {
+        return path == "/details";
+    }
+
+    // 平台用户 (type=11) 只能访问 /platform
+    if (roleType == RoleType.HAS_ROLE) {
+        return path == "/platform";
     }
 
     return false;
-};
-
-// 获取用户的默认首页
-const getDefaultPage = (userType: number, roleType: number): string => {
-    if (userType == UserType.PLATFORM_USER) {
-        return "/platform";
-    }
-
-    if (userType == UserType.STUDENT) {
-        return "/profile";
-    }
-
-    if (userType == UserType.TEACHER) {
-        return roleType == RoleType.NO_ROLE ? "/details" : "/platform";
-    }
-
-    return "/profile";
 };
 
 // 认证守卫
@@ -114,6 +94,7 @@ export const authGuard = async (
     const userInfo = authStore.userInfo;
     if (userInfo && to.path !== "/login" && to.path !== "/error") {
         const hasPermission = hasPermissionToPath(userInfo.type, userInfo.roleType, to.path);
+        console.log("hasPermission", hasPermission);
         if (!hasPermission) {
             return redirectToError(to, next);
         }
@@ -131,7 +112,19 @@ export const loginGuard = (to: RouteLocationNormalized, from: RouteLocationNorma
     if (to.path == "/login" && hasValidAuth) {
         const userType = authStore.getUserType;
         const userRoleType = authStore.getUserRoleType;
-        const defaultPage = getDefaultPage(userType, userRoleType);
+
+        if (userRoleType == RoleType.HAS_ROLE) {
+            return utils.redirectWindow("/mapi/dashboard/index");
+        }
+
+        let defaultPage = "/profile";
+        if (userType == UserType.STUDENT) {
+            defaultPage = "/profile";
+        }
+
+        if (userType == UserType.TEACHER) {
+            defaultPage = "/details";
+        }
 
         console.log("userType", userType);
         console.log("userRoleType", userRoleType);
