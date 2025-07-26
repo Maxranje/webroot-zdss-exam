@@ -116,7 +116,7 @@ const useScheduleLeftContent = () => {
         try {
             const { startDate, endDate } = getDateRange();
 
-            const result = await authStore.fetchAuthReq("/napi/calendar/teacher", "POST", {
+            const result = await authStore.fetchAuthReq("/mapi/napi/calendar_teacher", "POST", {
                 start_date: startDate,
                 end_date: endDate,
             });

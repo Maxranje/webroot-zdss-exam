@@ -334,7 +334,7 @@ const hasChecklist = computed(() => {
 const fetchAbroadPlans = async () => {
     loading.value = true;
     try {
-        const response = await authStore.fetchAuthReq("/napi/abroadplan/lists", "GET");
+        const response = await authStore.fetchAuthReq("/mapi/napi/abroadplan_lists", "GET");
         if (response.status === 0) {
             abroadplans.value = response.data.list || [];
         } else {
@@ -414,7 +414,7 @@ const handleStudentCheck = async (service: Service, item: ChecklistItem) => {
         });
 
         // 调用真实的 API
-        const result = await authStore.fetchAuthReq("/napi/abroadplan/check", "POST", {
+        const result = await authStore.fetchAuthReq("/mapi/napi/abroadplan_check", "POST", {
             key: item.key,
             service_id: service.id,
         });

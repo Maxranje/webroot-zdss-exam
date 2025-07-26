@@ -154,7 +154,7 @@ const useScheduleRightContent = () => {
     const fetchScheduleStats = async () => {
         loadingScheduleStats.value = true;
         try {
-            const result = (await authStore.fetchAuthReq("/napi/schedule/tsummary", "GET")) as ApiResponse;
+            const result = (await authStore.fetchAuthReq("/mapi/napi/schedule_tsummary", "GET")) as ApiResponse;
             handleApiResponse(result);
         } catch (error) {
             console.error("获取排课统计失败:", error);

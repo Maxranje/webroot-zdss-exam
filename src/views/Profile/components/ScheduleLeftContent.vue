@@ -57,7 +57,7 @@ const fetchCalendarData = async () => {
         }
 
         // 调用认证请求接口
-        const result = await authStore.fetchAuthReq("/napi/calendar/student", "POST", {
+        const result = await authStore.fetchAuthReq("/mapi/napi/calendar_student", "POST", {
             start_date: startDate,
             end_date: endDate,
         });

@@ -26,11 +26,11 @@ export default defineConfig({
         strictPort: true, // 强制使用指定端口，如果端口被占用则报错
         open: true,
         proxy: {
-            "/napi": {
+            "/mapi": {
                 target: "http://127.0.0.1:8060",
                 changeOrigin: true,
                 secure: false,
-                rewrite: path => path.replace(/^\/napi/, "/napi"),
+                rewrite: path => path.replace(/^\/mapi/, "/mapi"),
             },
         },
     },

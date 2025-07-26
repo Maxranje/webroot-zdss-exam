@@ -139,7 +139,7 @@ const fetchOptions = async (type: string) => {
     if (!type) return;
 
     try {
-        const result = await authStore.fetchAuthReq("/napi/calendar/typelists", "POST", {
+        const result = await authStore.fetchAuthReq("/mapi/napi/calendar_typelists", "POST", {
             type: type,
         });
 

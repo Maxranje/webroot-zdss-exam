@@ -106,7 +106,7 @@ const scheduleStats = ref<scheduleStats>({
 const fetchScheduleStats = async () => {
     loadingScheduleStats.value = true;
     try {
-        const result = await authStore.fetchAuthReq("/napi/schedule/summary", "GET");
+        const result = await authStore.fetchAuthReq("/mapi/napi/schedule_summary", "GET");
         if (result.status === 0) {
             scheduleStats.value.lastMonthTotal = result.data.last_month_total || "-";
             scheduleStats.value.currentMonthTotal = result.data.current_month_total || "-";

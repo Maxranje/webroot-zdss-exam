@@ -10,7 +10,7 @@ const STORAGE_KEYS = {
     IS_LOGGED_IN: "is-logged-in",
 } as const;
 
-const VALIDATE_INTERVAL = 30 * 60 * 1000; // 2小时缓存时间
+const VALIDATE_INTERVAL = 4 * 60 * 60 * 1000; // 4小时缓存时间
 
 export const useAuthStore = defineStore("auth", () => {
     // 状态
@@ -88,7 +88,7 @@ export const useAuthStore = defineStore("auth", () => {
         loading.value = true;
 
         try {
-            const result: LoginResponse = await fetchApiRequest("/napi/sign/in", "POST", params);
+            const result: LoginResponse = await fetchApiRequest("/mapi/sign/in", "POST", params);
 
             if (result.status === 0) {
                 saveAuthState(result.data.auth_token, result.data.user);
@@ -116,7 +116,7 @@ export const useAuthStore = defineStore("auth", () => {
         // 调用登出接口清除服务端session
         if (currentToken) {
             try {
-                await fetchAuthReq("/napi/sign/out", "POST");
+                await fetchAuthReq("/mapi/sign/out", "POST");
             } catch (error) {
                 console.error("登出接口调用失败:", error);
             }
@@ -146,7 +146,7 @@ export const useAuthStore = defineStore("auth", () => {
         }
 
         try {
-            const result = await fetchAuthReq("/napi/sign/check", "GET");
+            const result = await fetchAuthReq("/mapi/sign/check", "GET");
 
             if (result.status === 0) {
                 // 如果result.data.author_token && user 存在，则更新token和 user 信息
@@ -176,7 +176,7 @@ export const useAuthStore = defineStore("auth", () => {
         newPassword: string;
     }): Promise<{ success: boolean; message?: string }> => {
         try {
-            const result = await fetchApiRequest("/napi/sign/reset", "POST", params);
+            const result = await fetchApiRequest("/mapi/sign/reset", "POST", params);
 
             if (result.status === 0) {
                 return { success: true };

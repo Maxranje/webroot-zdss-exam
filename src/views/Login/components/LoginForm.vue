@@ -135,7 +135,7 @@ const handleLogin = async () => {
             }
             // 如果用户是教师，则重定向到外部管理平台
             if (authStore.userInfo && authStore.userInfo.roleType == 1) {
-                utils.redirectWindow("/mapi/dashboard/index");
+                utils.redirectWindow("/mapi/dashboard/page");
             } else {
                 router.push(result.redirect || "/profile");
             }

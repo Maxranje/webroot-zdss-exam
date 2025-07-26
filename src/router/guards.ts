@@ -114,7 +114,7 @@ export const loginGuard = (to: RouteLocationNormalized, from: RouteLocationNorma
         const userRoleType = authStore.getUserRoleType;
 
         if (userRoleType == RoleType.HAS_ROLE) {
-            return utils.redirectWindow("/mapi/dashboard/index");
+            return utils.redirectWindow("/mapi/dashboard/page");
         }
 
         let defaultPage = "/profile";

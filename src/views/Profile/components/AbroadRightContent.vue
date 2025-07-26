@@ -99,7 +99,7 @@ const abroadplanInfo = ref<AbroadplanInfo>({
 const fetchAbroadplanInfo = async () => {
     loadingStats.value = true;
     try {
-        const result = await authStore.fetchAuthReq("/napi/abroadplan/summary", "GET");
+        const result = await authStore.fetchAuthReq("/mapi/napi/abroadplan_summary", "GET");
         if (result.status === 0) {
             abroadplanInfo.value.totalServices = result.data.total_services || "0";
             abroadplanInfo.value.completedServices = result.data.completed_services || "0";

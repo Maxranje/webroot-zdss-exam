@@ -74,7 +74,7 @@ const fetchCalendarData = async (forceType?: string, forceSelectedId?: string) =
         const { startDate, endDate } = getCalendarDateRange();
 
         // 调用认证请求接口
-        const result = await authStore.fetchAuthReq("/napi/calendar/platform", "POST", {
+        const result = await authStore.fetchAuthReq("/mapi/napi/calendar_platform", "POST", {
             start_date: startDate,
             end_date: endDate,
             type: type,
