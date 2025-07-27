@@ -1,7 +1,7 @@
 <template>
     <div class="login-form-wrapper">
         <div class="login-form">
-            <h3 class="form-title">账户登录</h3>
+            <h3 class="form-title">中鼎教育平台</h3>
 
             <el-form ref="loginFormRef" :model="loginForm" :rules="loginRules" size="large">
                 <el-form-item prop="username">

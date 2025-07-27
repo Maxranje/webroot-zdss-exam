@@ -142,7 +142,7 @@
                                     </svg>
                                 </div>
                                 <div class="card-content">
-                                    <h3 class="card-title">模拟中心</h3>
+                                    <h3 class="card-title">模考中心</h3>
                                     <div class="card-features">
                                         <span class="feature-tag">题库中心</span>
                                         <span class="feature-tag">数据分析</span>
