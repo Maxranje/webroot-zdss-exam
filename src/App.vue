@@ -1,7 +1,7 @@
 <template>
-  <div id="app">
-    <router-view />
-  </div>
+    <div id="app">
+        <router-view />
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -10,8 +10,9 @@
 
 <style scoped>
 #app {
-  height: 100vh;
-  width: 100vw;
-  /* overflow: hidden; */
+    height: 100vh;
+    width: 100vw;
+    overflow-y: hidden;
+    /* overflow-x: hidden; */
 }
 </style>

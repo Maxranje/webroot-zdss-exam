@@ -1,6 +1,5 @@
 import type { NavigationGuardNext, RouteLocationNormalized } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
-import * as utils from "@/utils/http";
 
 // 用户类型枚举
 enum UserType {
@@ -38,7 +37,7 @@ const hasPermissionToPath = (userType: number, roleType: number, path: string): 
     }
 
     if (userType == UserType.TEACHER && roleType == RoleType.HAS_ROLE) {
-        return path == "/details" || path == "/platform";
+        return path == "/details" || path == "/platform" || path == "/choice";
     }
 
     // 教师用户 (type=13) 根据角色类型判断
@@ -48,7 +47,7 @@ const hasPermissionToPath = (userType: number, roleType: number, path: string): 
 
     // 平台用户 (type=11) 只能访问 /platform
     if (roleType == RoleType.HAS_ROLE) {
-        return path == "/platform";
+        return path == "/platform" || path == "/choice";
     }
 
     return false;
@@ -113,16 +112,13 @@ export const loginGuard = (to: RouteLocationNormalized, from: RouteLocationNorma
         const userType = authStore.getUserType;
         const userRoleType = authStore.getUserRoleType;
 
-        if (userRoleType == RoleType.HAS_ROLE) {
-            return utils.redirectWindow("/mapi/dashboard/page");
-        }
+        let defaultPage = "/choice";
 
-        let defaultPage = "/profile";
         if (userType == UserType.STUDENT) {
             defaultPage = "/profile";
-        }
-
-        if (userType == UserType.TEACHER) {
+        } else if (userRoleType == RoleType.HAS_ROLE) {
+            defaultPage = "/choice";
+        } else if (userType == UserType.TEACHER) {
             defaultPage = "/details";
         }
 
@@ -140,7 +136,7 @@ export const loginGuard = (to: RouteLocationNormalized, from: RouteLocationNorma
 export const titleGuard = (to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {
     // 设置页面标题
     if (to.meta?.title) {
-        document.title = `${to.meta.title} - 中鼎模考平台`;
+        document.title = `${to.meta.title} - 中鼎教育平台`;
     }
 
     next();

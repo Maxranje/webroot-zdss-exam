@@ -48,7 +48,7 @@ import { useAuthStore } from "@/stores/auth";
 import { LoginParams } from "@/types/auth";
 import * as utils from "@/utils/http";
 
-defineEmits<{
+const emit = defineEmits<{
     switchToReset: [];
 }>();
 
@@ -133,9 +133,9 @@ const handleLogin = async () => {
             } else {
                 clearSavedUsername();
             }
-            // 如果用户是教师，则重定向到外部管理平台
+            // 如果用户有权限（roleType > 0），则跳转到选择页面
             if (authStore.userInfo && authStore.userInfo.roleType == 1) {
-                utils.redirectWindow("/mapi/dashboard/page");
+                router.push("/choice");
             } else {
                 router.push(result.redirect || "/profile");
             }

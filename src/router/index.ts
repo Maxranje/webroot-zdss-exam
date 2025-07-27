@@ -17,6 +17,15 @@ const router = createRouter({
                 title: "用户登录",
             },
         },
+        {
+            path: "/choice",
+            name: "Choice",
+            component: () => import("@/views/Choice/MainView.vue"),
+            meta: {
+                requiresAuth: true,
+                title: "选择平台",
+            },
+        },
         // 合并所有指向个人中心的路由
         {
             path: "/profile",
