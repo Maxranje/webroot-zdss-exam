@@ -1,6 +1,6 @@
 <template>
     <div class="schedule-stats">
-        <el-card class="stat-card gradient-card-schedule" shadow="hover" v-loading="loadingScheduleStats">
+        <el-card class="stat-card gradient-card-schedule" shadow="hover" v-loading="loadingScheduleStats" :body-style="{ padding: '0' }">
             <div class="stat-icon">
                 <el-icon size="24"><Calendar /></el-icon>
             </div>
@@ -10,7 +10,7 @@
             </div>
         </el-card>
 
-        <el-card class="stat-card gradient-card-schedule-2" shadow="hover" v-loading="loadingScheduleStats">
+        <el-card class="stat-card gradient-card-schedule-2" shadow="hover" v-loading="loadingScheduleStats" :body-style="{ padding: '0' }">
             <div class="stat-icon">
                 <el-icon size="24"><Check /></el-icon>
             </div>
@@ -20,7 +20,7 @@
             </div>
         </el-card>
 
-        <el-card class="stat-card gradient-card-schedule-3" shadow="hover" v-loading="loadingScheduleStats">
+        <el-card class="stat-card gradient-card-schedule-3" shadow="hover" v-loading="loadingScheduleStats" :body-style="{ padding: '0' }">
             <div class="stat-icon">
                 <el-icon size="24"><Clock /></el-icon>
             </div>
@@ -31,7 +31,7 @@
         </el-card>
 
         <!-- 近期课程 -->
-        <el-card class="upcoming-card" shadow="hover" v-loading="loadingScheduleStats">
+        <el-card class="upcoming-card" shadow="never" v-loading="loadingScheduleStats">
             <template #header>
                 <h4>当周临近课程提醒</h4>
             </template>
@@ -108,9 +108,9 @@ const fetchScheduleStats = async () => {
     try {
         const result = await authStore.fetchAuthReq("/mapi/napi/schedule_summary", "GET");
         if (result.status === 0) {
-            scheduleStats.value.lastMonthTotal = result.data.last_month_total || "-";
-            scheduleStats.value.currentMonthTotal = result.data.current_month_total || "-";
-            scheduleStats.value.nextMonthTotal = result.data.next_month_total || "-";
+            scheduleStats.value.lastMonthTotal = result.data.last_month_total || "0";
+            scheduleStats.value.currentMonthTotal = result.data.current_month_total || "0";
+            scheduleStats.value.nextMonthTotal = result.data.next_month_total || "0";
             if (result.data.week_schedule_list) {
                 scheduleStats.value.weekScheduleList = result.data.week_schedule_list.map((course: any) => ({
                     title: course.title,
@@ -146,15 +146,12 @@ onMounted(() => {
 
 .stat-card {
     border: none;
-    color: white;
-    transition: all 0.3s ease;
 
     &:hover {
         transform: translateY(-2px);
     }
 
     :deep(.el-card__body) {
-        padding: 20px;
         display: flex;
         align-items: center;
         gap: 16px;
@@ -173,43 +170,69 @@ onMounted(() => {
 
     .stat-content {
         .stat-number {
-            font-size: 24px;
             font-weight: bold;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .stat-label {
-            font-size: 14px;
+            font-weight: bold;
             opacity: 0.9;
         }
     }
 }
 
 .gradient-card-schedule {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-
+    background-image: url("/img/card_bg1.png");
+    background-size: cover;
+    background-position: center;
+    border-radius: 1rem;
+    color: #667eea;
+    padding: 0.85rem 2rem;
     &:hover {
         box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    .stat-icon {
+        background: rgba(102, 126, 234, 0.2);
     }
 }
 
 .gradient-card-schedule-2 {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-
+    background-image: url("/img/card_bg2.png");
+    background-size: cover;
+    background-position: center;
+    border-radius: 1rem;
+    color: #2d88c8;
+    padding: 0.85rem 2rem;
     &:hover {
-        box-shadow: 0 8px 25px rgba(245, 87, 108, 0.3);
+        box-shadow: 0 8px 25px rgba(32, 57, 79, 0.29);
+    }
+
+    .stat-icon {
+        background: rgba(90, 116, 181, 0.2);
     }
 }
 
 .gradient-card-schedule-3 {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-
+    background-image: url("/img/card_bg3.png");
+    background-size: cover;
+    background-position: center;
+    border-radius: 1rem;
+    color: #4facee;
+    padding: 0.85rem 2rem;
     &:hover {
         box-shadow: 0 8px 25px rgba(79, 172, 254, 0.3);
     }
+
+    .stat-icon {
+        background: rgba(79, 172, 254, 0.2);
+    }
 }
 
-.upcoming-card {
+.upcoming-card { 
+    border-radius: 1rem;   
+    background-color: #f6f9fc;
+    margin-top: 24px;
     :deep(.el-card__header) {
         h4 {
             margin: 0;
@@ -222,7 +245,7 @@ onMounted(() => {
             display: flex;
             align-items: center;
             padding: 12px 0;
-            border-bottom: 1px solid #f0f2f5;
+            border-bottom: 1px solid #ffffff;
             transition: all 0.3s ease;
 
             &:last-child {
@@ -281,7 +304,6 @@ onMounted(() => {
         align-items: center;
         padding: 40px 0;
         color: #909399;
-        font-size: 16px;
 
         .empty-icon {
             margin-bottom: 15px;
@@ -315,7 +337,7 @@ onMounted(() => {
 
         .stat-content {
             .stat-number {
-                font-size: 20px;
+                font-size: 13px;
             }
 
             .stat-label {
@@ -374,7 +396,7 @@ onMounted(() => {
 
         .stat-content {
             .stat-number {
-                font-size: 18px;
+                font-size: 12px;
             }
 
             .stat-label {

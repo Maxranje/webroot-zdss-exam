@@ -51,23 +51,26 @@
                 <el-row :gutter="24" class="full-width" style="margin: 0">
                     <el-col :span="24" :lg="18">
                         <!-- 左侧内容区 主体业务-->
-                        <el-card class="content-left">
-                            <div class="content-left-body">
-                                <!-- 动态左侧内容组件 -->
-                                <component :is="leftComponent" />
-                            </div>
+                        <el-card class="content-left" shadow="never">
+                            <component :is="leftComponent" />
                         </el-card>
                     </el-col>
 
                     <el-col :span="24" :lg="6" class="content-right">
                         <!-- 用户信息卡片 -->
-                        <el-card class="user-info-card" shadow="hover">
-                            <div class="user-avatar">
+                        <el-card class="user-info-card" shadow="never">
+                            <div class="user-info-header">
                                 <el-avatar :size="60" :src="userInfo.avatar" />
-                            </div>
-                            <div class="user-details">
-                                <h3>{{ userInfo.nickname }}</h3>
-                                <p class="user-subtitle">{{ userInfo.school }} / {{ userInfo.grade }}</p>
+                                <div class="user-primary-info">
+                                    <div class="name-line">
+                                        <h3 class="nickname">{{ userInfo.nickname }}</h3>
+                                    </div>
+                                    <div class="details-line">
+                                        <span class="info-item">学校: {{ userInfo.school }}</span>
+                                        <div class="divider"></div>
+                                        <span class="info-item">学管: {{ userInfo.sopname }}</span>
+                                    </div>
+                                </div>
                             </div>
                         </el-card>
 
@@ -83,10 +86,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, provide } from "vue";
-import { useRouter } from "vue-router";
+import { ref, computed, onMounted, provide, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useAuthStore } from "@/stores/auth";
+import { School, Document, Calendar, SwitchButton, User, Location } from "@element-plus/icons-vue";
 
 // 导入子组件
 import ExamLeftContent from "@/views/Profile/components/ExamLeftContent.vue";
@@ -97,11 +101,19 @@ import ScheduleLeftContent from "@/views/Profile/components/ScheduleLeftContent.
 import ScheduleRightContent from "@/views/Profile/components/ScheduleRightContent.vue";
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 // 响应式数据
 const activeMenu = ref("schedule");
 const rightComponentRef = ref();
+
+// 监听路由参数变化
+watch(() => route.query.tab, (newTab) => {
+    if (newTab && ["schedule", "abroad", "exam"].includes(newTab as string)) {
+        activeMenu.value = newTab as string;
+    }
+}, { immediate: true });
 
 // 用户信息
 const userInfo = computed(() => {
@@ -110,6 +122,7 @@ const userInfo = computed(() => {
         nickname: authStore.userInfo?.nickname || "同学",
         school: authStore.userInfo?.school || "-",
         grade: authStore.userInfo?.graduate || "-",
+        sopname: authStore.userInfo?.sopname || "-",
     };
 });
 
@@ -156,6 +169,13 @@ const rightComponent = computed(() => {
 const handleMenuSelect = (key: string) => {
     // 更新当前激活的菜单项，组件会通过计算属性自动切换左右内容
     activeMenu.value = key;
+    // 更新URL参数
+    router.push({ 
+        query: { 
+            ...route.query,
+            tab: key 
+        } 
+    });
 };
 
 const handleLogout = async () => {
@@ -179,13 +199,11 @@ const handleLogout = async () => {
     height: 100vh;
     display: flex;
     flex-direction: column;
-    background: #f5f7fa;
+    background: linear-gradient(to bottom, #d7e4f7, #ffffff);
     overflow-x: hidden;
     max-width: 100%;
 }
 .top-nav {
-    background: white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -200,6 +218,11 @@ const handleLogout = async () => {
     .nav-menu {
         border-bottom: none;
         background: transparent;
+
+        // 统一子菜单和菜单项的悬停背景色
+        :deep(.el-sub-menu__title:hover) {
+            background-color: transparent !important;
+        }
     }
     .nav-right {
         padding-right: 24px;
@@ -211,6 +234,8 @@ const handleLogout = async () => {
     padding: 1.75rem 1rem;
 
     .content-left {
+        background-color: #f6f9fc;
+        border-radius: 1rem;
         min-height: calc(100vh - 112px); // 减去header和padding
 
         :deep(.el-card__body) {
@@ -226,24 +251,58 @@ const handleLogout = async () => {
         gap: 20px;
 
         .user-info-card {
+            background-color: transparent;
+            border: none;
+            box-shadow: none;
+
             :deep(.el-card__body) {
+                padding: 10px;
+            }
+
+            .user-info-header {
                 display: flex;
                 align-items: center;
-                justify-content: flex-start;
-                padding: 24px;
                 gap: 16px;
             }
 
-            .user-details h3 {
-                margin: 0 0 8px 0;
-                color: #303133;
-                font-size: 18px;
+            .user-primary-info {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
             }
 
-            .user-subtitle {
-                margin: 4px 0;
-                color: #909399;
-                font-size: 14px;
+            .name-line {
+                display: flex;
+                align-items: baseline;
+                gap: 8px;
+
+                .nickname {
+                    margin: 0;
+                    color: #303133;
+                    font-size: 18px;
+                    font-weight: 600;
+                }
+            }
+
+            .details-line {
+                display: flex;
+                align-items: center;
+                background-clip: padding-box;
+                -webkit-background-clip: padding-box;
+
+                .info-item {
+                    color: #87888b;
+                    font-size: 12px;
+                    font-weight: 500;;
+                }
+
+                .divider {
+                    height: 16px;
+                    width: 1px;
+                    background-color: #e0e3e6;
+                    margin: 0 12px;
+                    box-shadow: inset 0.5px 0 0 #d4d7da;
+                }
             }
         }
     }
@@ -485,21 +544,7 @@ const handleLogout = async () => {
 
                 .user-info-card {
                     :deep(.el-card__body) {
-                        flex-direction: column;
                         padding: 20px;
-                        gap: 12px;
-                    }
-
-                    .user-details {
-                        margin-top: 0;
-
-                        h3 {
-                            font-size: 16px;
-                        }
-
-                        .user-subtitle {
-                            font-size: 13px;
-                        }
                     }
                 }
             }

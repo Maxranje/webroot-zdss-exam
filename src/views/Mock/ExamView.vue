@@ -1,7 +1,7 @@
 <template>
     <div class="exam-page">
         <!-- 考试中心顶部栏 -->
-        <div class="exam-header">
+        <div v-if="examInitialized" class="exam-header">
             <div class="header-content">
                 <div class="exam-info">
                     <h2>{{ examInfo.title }}</h2>
@@ -70,13 +70,21 @@
                 </span>
             </template>
         </el-dialog>
+
+        <!-- 说明 Modal -->
+        <InstructionsModal
+            v-model:visible="showInstructions"
+            @start="handleStartExam"
+            exam-info="雅思模拟考试 A卷" />
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
-import { useRouter } from "vue-router";
+import { ref, computed, onMounted, onUnmounted, defineAsyncComponent } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { useAuthStore } from "@/stores/auth";
+import { ExamItem } from "@/types/exam";
 
 // 题型组件
 import ChoiceQuestion from "@/components/Exam/ChoiceQuestion.vue";
@@ -87,9 +95,63 @@ import Matching from "@/components/Exam/Matching.vue";
 import Listening from "@/components/Exam/Listening.vue";
 import Speaking from "@/components/Exam/Speaking.vue";
 
+const InstructionsModal = defineAsyncComponent(() => import('./ExamInstructions.vue'));
+
 const router = useRouter();
+const route = useRoute();
+const authStore = useAuthStore();
+
+// 显示说明modal
+const showInstructions = ref(false);
+const examInitialized = ref(false);
+const currentExam = ref<ExamItem>();
+
+// 初始化考试
+const initExam = async () => {
+    try {
+        const storedExam = localStorage.getItem('currentExam');
+        if (!storedExam) {
+            router.replace('/404');
+            return;
+        }
+
+        currentExam.value = JSON.parse(storedExam);
+        
+        const result = await authStore.fetchAuthReq('/mapi/napi/exam_init', 'POST', {
+            exam_id: currentExam.value?.examId
+        });
+        if (!result || result.status !== 0) {
+            throw new Error(result?.msg || '初始化考试失败');
+        }
+
+        if (result.data.status === 1) {
+            showInstructions.value = true;
+        } else if (result.data.status === 5) {
+            examInitialized.value = true;
+        } else {
+            router.replace('/finish');
+        }
+    } catch (error: any) {
+        router.replace('/error');
+    }
+};
+
+// 处理开始考试
+const handleStartExam = () => {
+    showInstructions.value = false;
+    examInitialized.value = true;
+};
+
+// 防止返回
+onMounted(() => {
+    history.pushState(null, '', document.URL);
+    window.addEventListener('popstate', () => {
+        history.pushState(null, '', document.URL);
+    });
+});
 
 // 考试信息
+const examId = route.params.examId as string;
 const examInfo = ref({
     title: "雅思模拟考试 A卷",
     type: "综合测试",
@@ -274,6 +336,7 @@ const handleCloseSubmit = () => {
 
 // 生命周期
 onMounted(() => {
+    initExam();
     startTimer();
 });
 

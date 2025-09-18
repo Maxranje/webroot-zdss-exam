@@ -132,8 +132,8 @@ const renderEventContent = (arg: any) => {
 
 // 根据状态获取背景颜色
 const getEventBackgroundColor = (state: number): string => {
-    if (state === 2) return "#90EE90"; // 浅绿色
-    if (state === 3) return "#f6d5ba"; // 浅棕色
+    if (state === 2) return "#bee1af"; // 浅绿色
+    if (state === 3) return "#F3E9DC"; // 浅棕色
     return "#123456"; // 默认浅青色
 };
 </script>

@@ -17,6 +17,7 @@ export interface UserInfo {
     avatar: string;
     school: string;
     graduate: string;
+    sopname: string;
 }
 
 export interface LoginResponse {
@@ -41,3 +42,4 @@ export interface ApiResponse<T = any> {
     msg: string;
     data: T;
 }
+

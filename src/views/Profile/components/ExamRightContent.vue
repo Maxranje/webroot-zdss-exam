@@ -1,26 +1,26 @@
 <template>
     <div class="stats-cards">
-        <el-card class="stat-card gradient-card" shadow="hover">
+        <el-card class="stat-card gradient-card" shadow="hover" v-loading="loadingStats" :body-style="{ padding: '0' }">
             <div class="stat-icon">
                 <el-icon size="24"><DocumentChecked /></el-icon>
             </div>
             <div class="stat-content">
                 <div class="stat-number">{{ userStats.totalExams }}</div>
-                <div class="stat-label">累计考试</div>
+                <div class="stat-label">累计模考</div>
             </div>
         </el-card>
 
-        <el-card class="stat-card gradient-card-2" shadow="hover">
+        <el-card class="stat-card gradient-card-2" shadow="hover" v-loading="loadingStats" :body-style="{ padding: '0' }">
             <div class="stat-icon">
                 <el-icon size="24"><ReadingLamp /></el-icon>
             </div>
             <div class="stat-content">
                 <div class="stat-number">{{ userStats.studyHours }}h</div>
-                <div class="stat-label">累计学习</div>
+                <div class="stat-label">单词本</div>
             </div>
         </el-card>
 
-        <el-card class="stat-card gradient-card-3" shadow="hover">
+        <el-card class="stat-card gradient-card-3" shadow="hover" v-loading="loadingStats" :body-style="{ padding: '0' }">
             <div class="stat-icon">
                 <el-icon size="24"><Trophy /></el-icon>
             </div>
@@ -35,6 +35,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 
+let loadingStats = ref(false);
 // 用户统计数据
 const userStats = ref({
     totalExams: 26,
@@ -52,16 +53,12 @@ const userStats = ref({
 
 .stat-card {
     border: none;
-    color: white;
-    transition: all 0.3s ease;
 
     &:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
     }
 
     :deep(.el-card__body) {
-        padding: 20px;
         display: flex;
         align-items: center;
         gap: 16px;
@@ -80,35 +77,62 @@ const userStats = ref({
 
     .stat-content {
         .stat-number {
-            font-size: 24px;
             font-weight: bold;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .stat-label {
-            font-size: 14px;
+            font-weight: bold;
             opacity: 0.9;
         }
     }
 }
 
 .gradient-card {
-    background: linear-gradient(135deg, #6374c1 0%, #764ba2 100%);
+    background-image: url("/img/card_bg1.png");
+    background-size: cover;
+    background-position: center;
+    border-radius: 1rem;
+    color: #667eea;
+    padding: 0.85rem 2rem;
+    &:hover {
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    .stat-icon {
+        background: rgba(102, 126, 234, 0.2);
+    }
 }
 
 .gradient-card-2 {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-
+    background-image: url("/img/card_bg2.png");
+    background-size: cover;
+    background-position: center;
+    border-radius: 1rem;
+    color: #2d88c8;
+    padding: 0.85rem 2rem;
     &:hover {
-        box-shadow: 0 8px 25px rgba(245, 87, 108, 0.3);
+        box-shadow: 0 8px 25px rgba(32, 57, 79, 0.29);
+    }
+
+    .stat-icon {
+        background: rgba(90, 116, 181, 0.2);
     }
 }
 
 .gradient-card-3 {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-
+    background-image: url("/img/card_bg3.png");
+    background-size: cover;
+    background-position: center;
+    border-radius: 1rem;
+    color: #4facee;
+    padding: 0.85rem 2rem;
     &:hover {
         box-shadow: 0 8px 25px rgba(79, 172, 254, 0.3);
+    }
+
+    .stat-icon {
+        background: rgba(79, 172, 254, 0.2);
     }
 }
 

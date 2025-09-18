@@ -1,6 +1,6 @@
 <template>
     <div class="abroadplan-stats">
-        <el-card class="stat-card gradient-card-abroadplan" shadow="hover" v-loading="loadingStats">
+        <el-card class="stat-card gradient-card" shadow="hover" v-loading="loadingStats" :body-style="{ padding: '0' }">
             <div class="stat-icon">
                 <el-icon size="24"><Calendar /></el-icon>
             </div>
@@ -10,7 +10,7 @@
             </div>
         </el-card>
 
-        <el-card class="stat-card gradient-card-abroadplan-2" shadow="hover" v-loading="loadingStats">
+        <el-card class="stat-card gradient-card-2" shadow="hover" v-loading="loadingStats" :body-style="{ padding: '0' }">
             <div class="stat-icon">
                 <el-icon size="24"><Check /></el-icon>
             </div>
@@ -20,7 +20,7 @@
             </div>
         </el-card>
 
-        <el-card class="stat-card gradient-card-abroadplan-3" shadow="hover" v-loading="loadingStats">
+        <el-card class="stat-card gradient-card-3" shadow="hover" v-loading="loadingStats" :body-style="{ padding: '0' }">
             <div class="stat-icon">
                 <el-icon size="24"><Clock /></el-icon>
             </div>
@@ -31,7 +31,7 @@
         </el-card>
 
         <!-- 待办事项提醒 -->
-        <el-card class="todo-card" shadow="hover" v-loading="loadingStats">
+        <el-card class="todo-card" shadow="never" v-loading="loadingStats">
             <template #header>
                 <h4>待确认事项</h4>
             </template>
@@ -141,15 +141,12 @@ onMounted(() => {
 
 .stat-card {
     border: none;
-    color: white;
-    transition: all 0.3s ease;
 
     &:hover {
         transform: translateY(-2px);
     }
 
     :deep(.el-card__body) {
-        padding: 20px;
         display: flex;
         align-items: center;
         gap: 16px;
@@ -168,43 +165,69 @@ onMounted(() => {
 
     .stat-content {
         .stat-number {
-            font-size: 24px;
             font-weight: bold;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .stat-label {
-            font-size: 14px;
+            font-weight: bold;
             opacity: 0.9;
         }
     }
 }
 
-.gradient-card-abroadplan {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-
+.gradient-card {
+    background-image: url("/img/card_bg1.png");
+    background-size: cover;
+    background-position: center;
+    border-radius: 1rem;
+    color: #667eea;
+    padding: 0.85rem 2rem;
     &:hover {
         box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
     }
-}
 
-.gradient-card-abroadplan-2 {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-
-    &:hover {
-        box-shadow: 0 8px 25px rgba(245, 87, 108, 0.3);
+    .stat-icon {
+        background: rgba(102, 126, 234, 0.2);
     }
 }
 
-.gradient-card-abroadplan-3 {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+.gradient-card-2 {
+    background-image: url("/img/card_bg2.png");
+    background-size: cover;
+    background-position: center;
+    border-radius: 1rem;
+    color: #2d88c8;
+    padding: 0.85rem 2rem;
+    &:hover {
+        box-shadow: 0 8px 25px rgba(32, 57, 79, 0.29);
+    }
 
+    .stat-icon {
+        background: rgba(90, 116, 181, 0.2);
+    }
+}
+
+.gradient-card-3 {
+    background-image: url("/img/card_bg3.png");
+    background-size: cover;
+    background-position: center;
+    border-radius: 1rem;
+    color: #4facee;
+    padding: 0.85rem 2rem;
     &:hover {
         box-shadow: 0 8px 25px rgba(79, 172, 254, 0.3);
+    }
+
+    .stat-icon {
+        background: rgba(79, 172, 254, 0.2);
     }
 }
 
 .todo-card {
+    border-radius: 1rem;   
+    background-color: #f6f9fc;
+    margin-top: 24px;    
     :deep(.el-card__header) {
         h4 {
             margin: 0;
@@ -225,7 +248,6 @@ onMounted(() => {
 
         .empty-text {
             font-weight: bold;
-            font-size: 16px;
         }
     }
 }
@@ -309,7 +331,7 @@ onMounted(() => {
 
         .stat-content {
             .stat-number {
-                font-size: 20px;
+                font-size: 13px;
             }
 
             .stat-label {
@@ -363,7 +385,7 @@ onMounted(() => {
 
         .stat-content {
             .stat-number {
-                font-size: 18px;
+                font-size: 12px;
             }
 
             .stat-label {

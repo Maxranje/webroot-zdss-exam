@@ -23,7 +23,7 @@
         <!-- 服务列表页面 -->
         <div v-else-if="!selectedService" class="service-list">
             <div class="page-header">
-                <h2>我的留学服务</h2>
+                <h3>我的留学服务</h3>
                 <p>查看您的留学服务进度和详情</p>
             </div>
 
@@ -92,7 +92,7 @@
                     :closable="false" />
             </div>
             <div class="detail-header">
-                <el-button @click="selectedService = null" :icon="ArrowLeft" circle size="large" class="back-btn" />
+                <el-button @click="selectedService = null" :icon="ArrowLeft" circle size="default" class="back-btn" />
                 <div class="service-info-header">
                     <h2>{{ selectedService.name || "未知服务" }}</h2>
                     <el-tag :type="getServiceStatusType(selectedService.status)">
@@ -145,7 +145,7 @@
                                 class="expand-all-btn"
                                 link
                                 @click="toggleExpandAll"
-                                :icon="!expandAll ? TurnOff : Open" />
+                                :icon="!expandAll ? Expand : Fold" />
                         </div>
                     </template>
 
@@ -258,7 +258,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, computed, inject } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { CaretRight, Grid, Open, Operation, TurnOff } from "@element-plus/icons-vue";
+import { CaretRight, Grid, Open, Operation, TurnOff, Expand, Fold } from "@element-plus/icons-vue";
 import { useAuthStore } from "@/stores/auth";
 import {
     Calendar,
@@ -488,7 +488,7 @@ $success-color: #67c23a;
 $warning-color: #e6a23c;
 $text-primary: #303133;
 $text-regular: #606266;
-$text-secondary: #909399;
+$text-secondary: #a3a6ab;
 $border-color: #e4e7ed;
 $bg-light: #f8f9fa;
 $bg-lighter: #fafbfc;
@@ -583,17 +583,17 @@ $bg-lighter: #fafbfc;
     .page-header {
         margin-bottom: 32px;
 
-        h2 {
+        h3 {
             margin: 0 0 8px 0;
             color: $text-primary;
-            font-size: 24px;
+            font-size: 18px;
             font-weight: 600;
         }
 
         p {
             margin: 0;
+            font-size: 13px;
             color: $text-secondary;
-            font-size: 15px;
         }
     }
 
@@ -607,6 +607,7 @@ $bg-lighter: #fafbfc;
         cursor: pointer;
         transition: all 0.3s ease;
         border: 1px solid $border-color;
+        border-radius: 10px;
 
         &:hover {
             transform: translateY(-4px);
@@ -629,7 +630,7 @@ $bg-lighter: #fafbfc;
 
                 h3 {
                     margin: 0;
-                    font-size: 18px;
+                    font-size: 16px;
                     font-weight: 600;
                     color: $text-primary;
                 }
@@ -660,7 +661,7 @@ $bg-lighter: #fafbfc;
                 gap: 8px;
                 margin-bottom: 8px;
                 color: $text-regular;
-                font-size: 14px;
+                font-size: 12px;
 
                 .el-icon {
                     color: $text-secondary;
@@ -680,14 +681,14 @@ $bg-lighter: #fafbfc;
 
                 .stat-number {
                     display: block;
-                    font-size: 22px;
+                    font-size: 18px;
                     font-weight: 700;
                     color: $primary-color;
-                    margin-bottom: 4px;
+                    margin-bottom: 2px;
                 }
 
                 .stat-label {
-                    font-size: 13px;
+                    font-size: 12px;
                     color: $text-secondary;
                 }
             }
@@ -720,7 +721,7 @@ $bg-lighter: #fafbfc;
 
             h2 {
                 margin: 0;
-                font-size: 22px;
+                font-size: 18px;
                 font-weight: 600;
                 color: $text-primary;
             }
@@ -735,10 +736,12 @@ $bg-lighter: #fafbfc;
 
     .progress-card,
     .checklist-card {
+        border-radius: 8px;
+        border: 1 solid #eaeef5;
         .card-header {
             font-weight: 600;
-            font-size: 16px;
             display: flex;
+            font-size: 18px;
             justify-content: space-between;
             align-items: center;
         }
@@ -768,7 +771,6 @@ $bg-lighter: #fafbfc;
                     display: flex;
                     justify-content: space-between;
                     color: $text-regular;
-                    font-size: 14px;
 
                     .highlight {
                         color: $primary-color;

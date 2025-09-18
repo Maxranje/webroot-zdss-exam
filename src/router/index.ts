@@ -64,6 +64,24 @@ const router = createRouter({
             },
         },
         {
+            path: "/finish",
+            name: "finish",
+            component: () => import("@/views/Error/703View.vue"),
+            meta: {
+                requiresAuth: false,
+                title: "考试完成",
+            },
+        },   
+        {
+            path: "/error",
+            name: "error",
+            component: () => import("@/views/Error/500View.vue"),
+            meta: {
+                requiresAuth: false,
+                title: "系统异常",
+            },
+        },                
+        {
             path: "/:pathMatch(.*)*",
             name: "NotFound",
             component: () => import("@/views/Error/404View.vue"),
