@@ -33,7 +33,7 @@ const redirectToError = (to: RouteLocationNormalized, next: NavigationGuardNext)
 const hasPermissionToPath = (userType: number, roleType: number, path: string): boolean => {
     // 学生用户 (type=12) 只能访问 /profile 和 /mock
     if (userType == UserType.STUDENT) {
-        return path == "/profile" || path == "/mock";
+        return path == "/profile" || path == "/mock" || path == "/mock/detail";
     }
 
     if (userType == UserType.TEACHER && roleType == RoleType.HAS_ROLE) {
@@ -60,7 +60,7 @@ export const authGuard = async (
     next: NavigationGuardNext
 ) => {
     const authStore = useAuthStore();
-
+    console.log("authGuard", to.path);
     // 如果路由不需要认证，直接通过
     if (!to.meta?.requiresAuth) {
         return next();
@@ -106,6 +106,7 @@ export const authGuard = async (
 export const loginGuard = (to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {
     const authStore = useAuthStore();
     const hasValidAuth = authStore.checkAuthStatus();
+    console.log("loginGuard", to.path);
 
     // 如果已登录用户访问登录页，重定向到对应首页
     if (to.path == "/login" && hasValidAuth) {

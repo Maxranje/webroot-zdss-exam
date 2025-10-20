@@ -16,9 +16,11 @@ export const fetchAuthRequest = (getToken: () => string | null, onUnauthorized: 
     return async <T = any>(url: string, method: string, body?: any) => {
         const token = getToken();
 
-        const headers: Record<string, string> = {
-            "Content-Type": "application/json",
-        };
+        // 只有当不是FormData时才设置Content-Type
+        const headers: Record<string, string> = {};
+        if (!(body instanceof FormData)) {
+            headers["Content-Type"] = "application/json";
+        }
 
         // 如果有 token，添加到请求头
         if (token) {
@@ -28,7 +30,7 @@ export const fetchAuthRequest = (getToken: () => string | null, onUnauthorized: 
         const response = await fetch(url, {
             method,
             headers,
-            body: body ? JSON.stringify(body) : undefined,
+            body: body instanceof FormData ? body : (body ? JSON.stringify(body) : undefined),
             credentials: "include",
         });
 
@@ -44,15 +46,17 @@ export const fetchAuthRequest = (getToken: () => string | null, onUnauthorized: 
 
 // 普通的API请求处理函数（不需要认证）
 export const fetchApiRequest = async <T = any>(url: string, method: string, body?: any): Promise<ApiResponse<T>> => {
-    const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-    };
+    // 只有当不是FormData时才设置Content-Type
+    const headers: Record<string, string> = {};
+    if (!(body instanceof FormData)) {
+        headers["Content-Type"] = "application/json";
+    }
 
     const response = await fetch(url, {
         method,
         headers,
         credentials: "include",
-        body: body ? JSON.stringify(body) : undefined,
+        body: body instanceof FormData ? body : (body ? JSON.stringify(body) : undefined),
     });
 
     return handleApiResponse<T>(response);

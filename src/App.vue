@@ -12,7 +12,7 @@
 #app {
     height: 100vh;
     width: 100vw;
-    overflow-y: hidden;
+    /* overflow-y: hidden; */
     /* overflow-x: hidden; */
 }
 </style>

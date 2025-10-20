@@ -8,6 +8,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     BaseCalendar: typeof import('./src/components/BaseCalendar.vue')['default']
+    Choice: typeof import('./src/components/Exam/Choice.vue')['default']
     ChoiceQuestion: typeof import('./src/components/Exam/ChoiceQuestion.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
     ElAside: typeof import('element-plus/es')['ElAside']
@@ -38,6 +39,9 @@ declare module 'vue' {
     ElOption: typeof import('element-plus/es')['ElOption']
     ElPagination: typeof import('element-plus/es')['ElPagination']
     ElProgress: typeof import('element-plus/es')['ElProgress']
+    ElRadioButton: typeof import('element-plus/es')['ElRadioButton']
+    ElRadioGroup: typeof import('element-plus/es')['ElRadioGroup']
+    ElRate: typeof import('element-plus/es')['ElRate']
     ElRow: typeof import('element-plus/es')['ElRow']
     ElSelect: typeof import('element-plus/es')['ElSelect']
     ElSkeleton: typeof import('element-plus/es')['ElSkeleton']
@@ -49,6 +53,8 @@ declare module 'vue' {
     ElTabs: typeof import('element-plus/es')['ElTabs']
     ElTag: typeof import('element-plus/es')['ElTag']
     ExamActions: typeof import('./src/components/Exam/ExamActions.vue')['default']
+    ExamAnalysis: typeof import('./src/components/ExamAnalysis.vue')['default']
+    ExamErrorAnalysis: typeof import('./src/components/ExamAnalysis.vue')['default']
     ExamHeader: typeof import('./src/components/Exam/ExamHeader.vue')['default']
     FillBlank: typeof import('./src/components/Exam/FillBlank.vue')['default']
     Index: typeof import('./src/components/Icon/Index.vue')['default']

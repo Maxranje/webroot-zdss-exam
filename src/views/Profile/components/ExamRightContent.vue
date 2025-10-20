@@ -5,42 +5,79 @@
                 <el-icon size="24"><DocumentChecked /></el-icon>
             </div>
             <div class="stat-content">
-                <div class="stat-number">{{ userStats.totalExams }}</div>
+                <div class="stat-number">{{ studentExamSummary.totalExams }}次</div>
                 <div class="stat-label">累计模考</div>
             </div>
         </el-card>
 
-        <el-card class="stat-card gradient-card-2" shadow="hover" v-loading="loadingStats" :body-style="{ padding: '0' }">
+        <!-- 隐藏单词本等级卡片 -->
+        <!--
+        <el-card
+            class="stat-card gradient-card-2"
+            shadow="hover"
+            v-loading="loadingStats"
+            :body-style="{ padding: '0' }">
             <div class="stat-icon">
                 <el-icon size="24"><ReadingLamp /></el-icon>
             </div>
             <div class="stat-content">
-                <div class="stat-number">{{ userStats.studyHours }}h</div>
-                <div class="stat-label">单词本</div>
+                <div class="stat-number">{{ studentExamSummary.wordsLevel }}</div>
+                <div class="stat-label">单词本等级</div>
             </div>
-        </el-card>
-
-        <el-card class="stat-card gradient-card-3" shadow="hover" v-loading="loadingStats" :body-style="{ padding: '0' }">
-            <div class="stat-icon">
-                <el-icon size="24"><Trophy /></el-icon>
-            </div>
-            <div class="stat-content">
-                <div class="stat-number">{{ userStats.currentScore }}</div>
-                <div class="stat-label">当前测试分</div>
-            </div>
-        </el-card>
+        </el-card>-->
     </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from "vue";
+import { onMounted } from "vue";
+import { useAuthStore } from "@/stores/auth";
 
+// 加载状态
 let loadingStats = ref(false);
-// 用户统计数据
-const userStats = ref({
-    totalExams: 26,
-    studyHours: 156,
-    currentScore: 7.5,
+
+// 学生考试信息
+interface StudentExamSummary {
+    totalExams: number;
+    wordsLevel: string;
+}
+
+// 获取认证 store
+const authStore = useAuthStore();
+
+// 数据定义
+const studentExamSummary = ref<StudentExamSummary>({
+    totalExams: 0,
+    wordsLevel: "Level 1",
+});
+
+// 获取统计数据
+const fetchStudentExamSummary = async () => {
+    loadingStats.value = true;
+    try {
+        const result = await authStore.fetchAuthReq("/mapi/napi/exam_summary", "GET");
+        if (result.status === 0) {
+            studentExamSummary.value.totalExams = result.data.total_exams || 0;
+            studentExamSummary.value.wordsLevel = result.data.words_level || "Level 1";
+        } else {
+            ElMessage.error(result.msg || "获取统计数据失败");
+        }
+    } catch (error) {
+        console.error("获取统计数据失败:", error);
+        ElMessage.error("获取统计数据失败");
+    } finally {
+        loadingStats.value = false;
+    }
+};
+
+// 暴露方法给父组件调用
+defineExpose({
+    refreshSummary: fetchStudentExamSummary,
+});
+
+// 组件挂载时获取数据
+onMounted(() => {
+    fetchStudentExamSummary();
 });
 </script>
 
@@ -143,23 +180,23 @@ const userStats = ref({
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 12px;
     }
-    
+
     .stat-card {
         :deep(.el-card__body) {
             padding: 16px;
             gap: 12px;
         }
-        
+
         .stat-icon {
             width: 40px;
             height: 40px;
         }
-        
+
         .stat-content {
             .stat-number {
                 font-size: 20px;
             }
-            
+
             .stat-label {
                 font-size: 13px;
             }
@@ -171,27 +208,27 @@ const userStats = ref({
     .stats-cards {
         grid-template-columns: 1fr;
     }
-    
+
     .stat-card {
         :deep(.el-card__body) {
             padding: 12px;
             gap: 10px;
         }
-        
+
         .stat-icon {
             width: 36px;
             height: 36px;
         }
-        
+
         .stat-content {
             .stat-number {
                 font-size: 18px;
             }
-            
+
             .stat-label {
                 font-size: 12px;
             }
         }
     }
 }
-</style> 
+</style>

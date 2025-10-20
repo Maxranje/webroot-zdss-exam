@@ -3,27 +3,50 @@
         <!-- 历史考试记录 -->
         <el-tab-pane label="历史考试记录" name="history">
             <div class="history-pane-content">
-                <el-table
-                    :data="paginatedHistory"
-                    style="width: 100%"
-                    height="100%"
-                >
-                    <el-table-column prop="indentify" label="考试编号" width="200" align="center" />
-                    <el-table-column prop="paperName" label="试卷名称" />
-                    <el-table-column prop="updateTime" label="日期" width="120" align="center" />
-                    <el-table-column prop="expireTime" label="时长" width="80" align="center" />
-                    <el-table-column prop="score" label="分数" width="100" align="center">
+                <el-table :data="paginatedHistory" style="width: 100%" height="100%">
+                    <el-table-column prop="indentify" label="考试编号" width="180" align="center" />
+                    <el-table-column prop="paperName" label="试卷名称" align="center">
                         <template #default="scope">
-                            <el-tag :type="getScoreType(scope.row.score)">
-                                {{ scope.row.score }}
+                            <div class="paper-name">
+                                {{ scope.row.paperName }}
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="studentStartTimeText" label="考试时间" width="120" align="center" />
+                    <el-table-column prop="studentSpendTimeText" label="用时" width="100" align="center">
+                        <template #default="row">
+                            <el-tag type="warning">
+                                {{ row.row.studentSpendTimeText }}
                             </el-tag>
                         </template>
                     </el-table-column>
-                    <el-table-column label="操作" width="120" align="center">
+                    <el-table-column prop="studentStatusText" label="考试状态" width="80" align="center">
                         <template #default="scope">
-                            <el-button size="small" @click="viewReport(scope.row)">
+                            <el-tag :type="getStatusTagType(scope.row.studentStatus)">
+                                {{ scope.row.studentStatusText }}
+                            </el-tag>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="studentScore" label="分数" width="80" align="center">
+                        <template #default="scope">
+                            <el-tag
+                                type="success"
+                                v-if="scope.row.studentScore !== null && scope.row.studentStatus === 8">
+                                {{ scope.row.studentScore }}
+                            </el-tag>
+                            <el-tag type="info" v-else>--</el-tag>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="操作" width="100" align="center">
+                        <template #default="scope">
+                            <el-button
+                                v-if="canViewReport(scope.row.studentStatus)"
+                                size="small"
+                                type="primary"
+                                @click="viewReport(scope.row)">
                                 查看报告
                             </el-button>
+                            <el-button v-else size="small" disabled @click="showNoReportTip">查看报告</el-button>
                         </template>
                     </el-table-column>
                 </el-table>
@@ -32,8 +55,7 @@
                     v-model:page-size="pageSize"
                     :page-sizes="[5, 10, 20]"
                     :total="totalItems"
-                    layout="total, sizes, prev, pager, next, jumper"
-                />
+                    layout="total, sizes, prev, pager, next, jumper" />
             </div>
         </el-tab-pane>
 
@@ -41,13 +63,12 @@
         <el-tab-pane label="待考试记录" name="pending">
             <div v-loading="loadingPending" class="exam-cards-container">
                 <div v-if="examPending.length > 0" class="exam-cards">
-                    <el-card 
-                        v-for="exam in examPending" 
-                        :key="exam.id" 
-                        class="exam-card" 
+                    <el-card
+                        v-for="exam in examPending"
+                        :key="exam.examId"
+                        class="exam-card"
                         shadow="hover"
-                        :style="{ backgroundImage: `url(${getRandomBackground()})` }"
-                    >
+                        :style="{ backgroundImage: `url(${getRandomBackground()})` }">
                         <template #header>
                             <div class="exam-card-header">
                                 <h3>{{ exam.paperName }}</h3>
@@ -56,20 +77,23 @@
                         <div class="card-body">
                             <p>
                                 <el-icon><Calendar /></el-icon>
-                                <span>考试时间：</span>{{ exam.startEnd }}
+                                <span>考试时间：</span>
+                                {{ exam.startEnd }}
                             </p>
                             <p>
                                 <el-icon><Clock /></el-icon>
-                                <span>考试时长：</span>{{ exam.expireTime }}
+                                <span>考试时长：</span>
+                                {{ exam.expireTimeText }}
                             </p>
                             <p>
                                 <el-icon><User /></el-icon>
-                                <span>监考老师：</span>{{ exam.teacherName }}
+                                <span>监考老师：</span>
+                                {{ exam.teacherName }}
                             </p>
                             <p>
                                 <el-icon><Timer /></el-icon>
                                 <span>剩余时间：</span>
-                                <span class="remaining-time">{{ exam.lastTime }}</span>
+                                <span class="remaining-time">{{ exam.lastTimeText }}</span>
                             </p>
                         </div>
                         <div class="card-footer">
@@ -83,14 +107,7 @@
 
         <!-- 能力评估 -->
         <el-tab-pane label="能力评估" name="assessment">
-            <el-card class="assessment-card" shadow="never">
-                <template #header>
-                    <h3>能力评估雷达图</h3>
-                </template>
-                <div class="chart-container">
-                    <v-chart class="chart" :option="radarOption" />
-                </div>
-            </el-card>
+            <ExamAnalysis />
         </el-tab-pane>
     </el-tabs>
 </template>
@@ -99,29 +116,36 @@
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
-import { use } from "echarts/core";
-import { CanvasRenderer } from "echarts/renderers";
-import { RadarChart } from "echarts/charts";
-import { GridComponent, TooltipComponent, LegendComponent } from "echarts/components";
-import VChart from "vue-echarts";
 import { useAuthStore } from "@/stores/auth";
+import { formatDurationTime, formatTime, formatDateTime } from "@/utils/tools";
 import { ExamItem } from "@/types/exam";
 import { Calendar, Clock, User, Timer } from "@element-plus/icons-vue";
+import ExamAnalysis from "@/components/ExamAnalysis.vue";
 
-// 注册 ECharts 组件
-use([CanvasRenderer, RadarChart, GridComponent, TooltipComponent, LegendComponent]);
+interface ExamListItem extends ExamItem {
+    startEnd: string;
+    expireTimeText: string;
+    lastTimeText: string;
+    studentStartTime: number;
+    studentEndTime: number;
+    studentStartEnd: string;
+    studentSpendTime: number;
+    studentSpendTimeText: string;
+    studentScore: number;
+    studentStatus: number;
+}
 
 const router = useRouter();
 const authStore = useAuthStore();
 
 // 响应式数据
-const activeTab = ref("pending");
+const activeTab = ref("history");
 const loadingPending = ref(false);
 
 // 历史考试记录
-const examHistory = ref<ExamItem[]>([]);
+const examHistory = ref<ExamListItem[]>([]);
 // 进行中考试记录
-const examPending = ref<ExamItem[]>([]);
+const examPending = ref<ExamListItem[]>([]);
 
 // 分页数据
 const currentPage = ref(1);
@@ -141,40 +165,7 @@ const getRandomBackground = () => {
     return `/img/exam-bg${bgNumber}.png`;
 };
 
-// 雷达图配置
-const radarOption = ref({
-    tooltip: {},
-    legend: {
-        data: ["当前能力", "平均线"],
-    },
-    radar: {
-        indicator: [
-            { name: "听力", max: 10 },
-            { name: "阅读", max: 10 },
-            { name: "写作", max: 10 },
-            { name: "口语", max: 10 },
-            { name: "词汇", max: 10 },
-        ],
-    },
-    series: [
-        {
-            name: "能力评估",
-            type: "radar",
-            data: [
-                {
-                    value: [7.5, 8.0, 6.5, 7.0, 8.5],
-                    name: "当前能力",
-                },
-                {
-                    value: [6.0, 6.5, 6.0, 6.2, 7.0],
-                    name: "平均线",
-                },
-            ],
-        },
-    ],
-});
-
-// 方法
+// 获取pending考试记录
 const fetchPendingExams = async () => {
     loadingPending.value = true;
     try {
@@ -182,10 +173,11 @@ const fetchPendingExams = async () => {
         if (result.status === 0 && result.data) {
             // 分别设置待考和历史记录
             if (result.data.pending) {
-                examPending.value = result.data.pending;
+                // 格式化每一项数据后放到examPending
+                examPending.value = result.data.pending.map(formatExamItem);
             }
             if (result.data.history) {
-                examHistory.value = result.data.history;
+                examHistory.value = result.data.history.map(formatExamItem);
             }
         } else {
             ElMessage.error(result.msg || "获取考试记录失败");
@@ -198,18 +190,101 @@ const fetchPendingExams = async () => {
     }
 };
 
-const getScoreType = (score: number) => {
-    if (score >= 8) return "success";
-    if (score >= 7) return "warning";
-    return "info";
+// 对exam数据格式化
+const formatExamItem = (exam: ExamListItem) => {
+    return {
+        ...exam,
+        startEnd: `${formatDateTime(exam.startTime)} 到 ${formatDateTime(exam.endTime)}`,
+        expireTimeText: `${exam.expireTime / 60} 分钟`,
+        lastTimeText: formatDurationTime(exam.lastTime, true),
+        studentStartTimeText: `${formatCustomDateTime(exam.studentStartTime)}`,
+        studentSpendTimeText: `${formatDurationTime(exam.studentSpendTime, true)}`,
+        studentStatusText: `${formatStudentStatus(exam.studentStatus)}`,
+        studentScore: exam.studentScore || 0,
+        sign: exam.sign || "",
+    };
+};
+
+const formatCustomDateTime = (seconds: number) => {
+    if (!seconds) {
+        return "--";
+    }
+    const date = new Date(seconds * 1000);
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    return `${month}月${day}日 ${hours.toString().padStart(2, "0")}时`;
+};
+
+// 结构化学员考试状态
+const formatStudentStatus = (status: number) => {
+    // 1 待开始, 2: 已交卷, 5:进行中, 4:被踢出, 7:批改中, 8:结束
+    switch (status) {
+        case 1:
+            return "已到期";
+        case 2:
+            return "待批改";
+        case 4:
+            return "被踢出";
+        case 7:
+            return "批改中";
+        case 8:
+            return "已结束";
+        default:
+            return "未知";
+    }
+};
+
+// 判断是否可以查看报告
+const canViewReport = (status: number) => {
+    // 2: 已交卷, 7:批改中, 8:结束 可以查看报告
+    return [2, 7, 8].includes(status);
+};
+
+// 获取状态标签类型
+const getStatusTagType = (status: number) => {
+    switch (status) {
+        case 1:
+            return "danger";
+        case 2:
+            return "primary";
+        case 4:
+            return "warning";
+        case 7:
+            return "info";
+        case 8:
+            return "success";
+    }
+};
+
+// 显示无法查看报告的提示
+const showNoReportTip = () => {
+    ElMessage.warning("当前考试状态无法查看报告");
 };
 
 const viewReport = (exam: any) => {
-    ElMessage.info(`查看 ${exam.paperName} 的详细报告`);
+    // 保存考试信息到localStorage以便DetailView使用
+    localStorage.setItem("examResult", JSON.stringify(exam));
+    // 导航到详情页并传递examId参数, 跳转新页面
+    // 生成完整URL并在新标签页中打开
+    const url = router.resolve({ path: "/mock/detail", query: { examId: exam.examId } }).href;
+    window.open(url, "_blank");
 };
 
-const startExam = (exam: any) => {
-    localStorage.setItem('currentExam', JSON.stringify(exam));
+// 开始考试
+const startExam = (exam: ExamItem) => {
+    // 判断starttime 和 endTime 和当前时间是否在有效期内
+    const currentTime = Date.now();
+    if (currentTime < exam.startTime * 1000) {
+        ElMessage.error("考试时间未到，不能开始考试");
+        return;
+    }
+    if (currentTime > exam.endTime * 1000) {
+        ElMessage.error("考试时间已过，不能进行考试, 联系监考老师");
+        return;
+    }
+    localStorage.setItem("currentExam", JSON.stringify(exam));
     router.push("/mock");
 };
 
@@ -277,80 +352,101 @@ onMounted(() => {
     }
 }
 
-    .history-pane-content {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
+.history-pane-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 
-        .el-table {
-            flex: 1;
-            /* height="100%" in template will handle the scroll */
+    .el-table {
+        flex: 1;
+        /* height="100%" in template will handle the scroll */
 
-            :deep(.el-table__header-wrapper) {
-                th {
-                    background-color:  #f0f8ff !important;
-                    font-weight: 600;
-                    color: #2c3e50 !important;
-                    height: 50px;
-                }
-            }
-
-            :deep(.el-table__row) {
-                transition: all 0.3s ease;
-
-                &:hover {
-                    background-color: #f5f9ff !important;
-                    transform: translateY(-2px);
-                    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-                }
-
-                td {
-                    padding: 12px 0;
-                    height: 60px;
-                }
-            }
-
-            :deep(.el-button) {
-                border-radius: 20px;
-                transition: all 0.3s;
-                
-                &:hover {
-                    transform: scale(1.05);
-                }
+        :deep(.el-table__header-wrapper) {
+            th {
+                background-color: #f0f8ff !important;
+                font-weight: 600;
+                color: #2c3e50 !important;
+                height: 50px;
             }
         }
 
-        .el-pagination {
-            flex-shrink: 0;
-            padding: 20px 0;
-            display: flex;
-            justify-content: flex-end;
-            
-            :deep(.el-pagination__sizes) {
-                margin-right: 15px;
+        :deep(.el-table__row) {
+            transition: all 0.3s ease;
+
+            &:hover {
+                background-color: #f5f9ff !important;
+                transform: translateY(-2px);
+                box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
             }
-            
-            :deep(.btn-prev),
-            :deep(.btn-next),
-            :deep(.el-pager li) {
-                background: transparent;
-                border: 1px solid #e4e7ed;
-                border-radius: 4px;
-                margin: 0 3px;
-                
-                &:hover {
-                    color: #409eff;
-                    border-color: #409eff;
-                }
+
+            td {
+                padding: 12px 0;
+                height: 60px;
             }
-            
-            :deep(.el-pager li.active) {
-                background-color: #409eff;
-                color: white;
+        }
+
+        :deep(.el-table__body-wrapper) {
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        :deep(.el-button) {
+            border-radius: 20px;
+            transition: all 0.3s;
+
+            &:hover {
+                transform: scale(1.05);
+            }
+
+            &.is-disabled {
+                background-color: #f5f7fa;
+                color: #c0c4cc;
+            }
+        }
+
+        .paper-name {
+            color: #2c3e50;
+            font-weight: 500;
+            padding: 4px 0;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+
+    .el-pagination {
+        flex-shrink: 0;
+        padding: 20px 0;
+        display: flex;
+        justify-content: flex-end;
+
+        :deep(.el-pagination__sizes) {
+            margin-right: 15px;
+        }
+
+        :deep(.btn-prev),
+        :deep(.btn-next),
+        :deep(.el-pager li) {
+            background: transparent;
+            border: 1px solid #e4e7ed;
+            border-radius: 4px;
+            margin: 0 3px;
+
+            &:hover {
+                color: #409eff;
                 border-color: #409eff;
             }
         }
-    }.exam-cards-container {
+
+        :deep(.el-pager li.active) {
+            background-color: #409eff;
+            color: white;
+            border-color: #409eff;
+        }
+    }
+}
+.exam-cards-container {
     height: 100%;
     overflow-y: auto; // 为这个容器单独添加滚动
 }
@@ -375,17 +471,13 @@ onMounted(() => {
     min-height: 300px;
 
     &::before {
-        content: '';
+        content: "";
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background: linear-gradient(180deg, 
-            rgba(0, 0, 0, 0.3) 0%,
-            rgba(0, 0, 0, 0.15) 30%,
-            rgba(0, 0, 0, 0.05) 100%
-        );
+        background: linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.15) 30%, rgba(0, 0, 0, 0.05) 100%);
         z-index: 1;
     }
 
@@ -400,7 +492,7 @@ onMounted(() => {
         padding: 24px 24px 16px;
         border-bottom: none;
         background: transparent;
-        
+
         .exam-card-header {
             h3 {
                 margin: 0;
@@ -424,7 +516,7 @@ onMounted(() => {
         padding: 16px;
         border-radius: 12px;
         backdrop-filter: blur(8px);
-        
+
         p {
             display: flex;
             align-items: center;
@@ -435,7 +527,7 @@ onMounted(() => {
 
             .el-icon {
                 margin-right: 12px;
-                color: #409EFF;
+                color: #409eff;
                 font-size: 18px;
             }
 
@@ -467,7 +559,7 @@ onMounted(() => {
             padding: 12px 32px;
             font-size: 16px;
             font-weight: 500;
-            background: linear-gradient(135deg, #409EFF, #36cfc9);
+            background: linear-gradient(135deg, #409eff, #36cfc9);
             border: none;
             box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
 
@@ -508,21 +600,21 @@ onMounted(() => {
         :deep(.el-tabs__header) {
             .el-tabs__nav-scroll {
                 overflow-x: auto;
-                
+
                 &::-webkit-scrollbar {
                     height: 2px;
                 }
-                
+
                 &::-webkit-scrollbar-track {
                     background: #f1f1f1;
                 }
-                
+
                 &::-webkit-scrollbar-thumb {
                     background: #c1c1c1;
                     border-radius: 2px;
                 }
             }
-            
+
             .el-tabs__item {
                 width: 120px;
                 padding: 12px 16px;
@@ -530,47 +622,47 @@ onMounted(() => {
                 white-space: nowrap;
             }
         }
-        
+
         :deep(.el-tabs__content) {
             padding: 16px;
         }
     }
-    
+
     .exam-cards {
         grid-template-columns: 1fr;
         gap: 20px;
         padding: 8px;
     }
-    
+
     .exam-card {
         min-height: 250px;
     }
-    
+
     .exam-card {
         :deep(.el-card__header) {
             padding: 20px 20px 12px;
-            
+
             h3 {
                 font-size: 18px;
             }
         }
-        
+
         :deep(.el-card__body) {
             padding: 0 20px 20px;
         }
-        
+
         .card-body {
             padding: 12px;
-            
+
             p {
                 font-size: 14px;
                 margin: 8px 0;
             }
         }
-        
+
         .card-footer {
             margin-top: 20px;
-            
+
             .el-button {
                 width: 90%;
                 padding: 10px 24px;
@@ -578,20 +670,20 @@ onMounted(() => {
             }
         }
     }
-    
+
     .assessment-card {
         :deep(.el-card__header) {
             padding: 16px;
-            
+
             h3 {
                 font-size: 16px;
             }
         }
-        
+
         :deep(.el-card__body) {
             padding: 16px;
         }
-        
+
         .chart-container {
             height: 300px;
             margin-top: 16px;
@@ -608,12 +700,12 @@ onMounted(() => {
                 font-size: 13px;
             }
         }
-        
+
         :deep(.el-tabs__content) {
             padding: 12px;
         }
     }
-    
+
     .assessment-card {
         .chart-container {
             height: 250px;

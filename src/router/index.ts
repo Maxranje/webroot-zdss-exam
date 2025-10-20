@@ -64,14 +64,32 @@ const router = createRouter({
             },
         },
         {
+            path: "/mock/detail",
+            name: "MockDetail",
+            component: () => import("@/views/Mock/DetailView.vue"),
+            meta: {
+                requiresAuth: true,
+                title: "考试报告",
+            },
+        },
+        {
+            path: "/mock/detail/:id",
+            name: "MockDetailWithId",
+            component: () => import("@/views/Mock/DetailView.vue"),
+            meta: {
+                requiresAuth: true,
+                title: "考试报告",
+            },
+        },
+        {
             path: "/finish",
             name: "finish",
-            component: () => import("@/views/Error/703View.vue"),
+            component: () => import("@/views/Mock/FinishView.vue"),
             meta: {
                 requiresAuth: false,
                 title: "考试完成",
             },
-        },   
+        },
         {
             path: "/error",
             name: "error",
@@ -80,7 +98,7 @@ const router = createRouter({
                 requiresAuth: false,
                 title: "系统异常",
             },
-        },                
+        },
         {
             path: "/:pathMatch(.*)*",
             name: "NotFound",

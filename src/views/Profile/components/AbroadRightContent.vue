@@ -2,7 +2,7 @@
     <div class="abroadplan-stats">
         <el-card class="stat-card gradient-card" shadow="hover" v-loading="loadingStats" :body-style="{ padding: '0' }">
             <div class="stat-icon">
-                <el-icon size="24"><Calendar /></el-icon>
+                <el-icon size="24"><Collection /></el-icon>
             </div>
             <div class="stat-content">
                 <div class="stat-number">{{ abroadplanInfo.totalServices }}</div>
@@ -10,7 +10,11 @@
             </div>
         </el-card>
 
-        <el-card class="stat-card gradient-card-2" shadow="hover" v-loading="loadingStats" :body-style="{ padding: '0' }">
+        <el-card
+            class="stat-card gradient-card-2"
+            shadow="hover"
+            v-loading="loadingStats"
+            :body-style="{ padding: '0' }">
             <div class="stat-icon">
                 <el-icon size="24"><Check /></el-icon>
             </div>
@@ -20,9 +24,13 @@
             </div>
         </el-card>
 
-        <el-card class="stat-card gradient-card-3" shadow="hover" v-loading="loadingStats" :body-style="{ padding: '0' }">
+        <el-card
+            class="stat-card gradient-card-3"
+            shadow="hover"
+            v-loading="loadingStats"
+            :body-style="{ padding: '0' }">
             <div class="stat-icon">
-                <el-icon size="24"><Clock /></el-icon>
+                <el-icon size="24"><SuitcaseLine /></el-icon>
             </div>
             <div class="stat-content">
                 <div class="stat-number">{{ abroadplanInfo.progressServices }}</div>
@@ -225,9 +233,9 @@ onMounted(() => {
 }
 
 .todo-card {
-    border-radius: 1rem;   
+    border-radius: 1rem;
     background-color: #f6f9fc;
-    margin-top: 24px;    
+    margin-top: 24px;
     :deep(.el-card__header) {
         h4 {
             margin: 0;
