@@ -4,7 +4,7 @@
 # 默认值
 PORT=3777
 MODE="run"
-OUT_DIR="/Users/maxranje/app/work/code/webserver-zdss-mapi/public"
+OUT_DIR="/Users/wangxuewen02/app/workspace/family/zdss/webserver-zdss-mapi/public"
 
 # 解析命令行参数
 while [[ $# -gt 0 ]]; do
