@@ -68,6 +68,8 @@ const handleInput = () => {
         answerId: 0,
         qid: props.question.qid,
         answerContent: writingContent.value,
+        reviewContent: "",
+        score: 0,
     };
     emit("answer-change", [studentAnswer]);
 };

@@ -83,6 +83,8 @@ const updateAnswer = () => {
             qid: props.question.qid,
             answerId: props.question.questionAnswer ? props.question.questionAnswer[index]?.answerId || 0 : 0,
             answerContent: answer,
+            reviewContent: "",
+            score: 0,
         };
     });
 

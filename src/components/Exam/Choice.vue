@@ -112,6 +112,8 @@ const selectOption = (optionId: string): void => {
             qid: props.question.qid,
             answerId: answerId,
             answerContent: option?.answerContent || "",
+            reviewContent: "",
+            score: 0,
         };
     });
 

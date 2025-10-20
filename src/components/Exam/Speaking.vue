@@ -373,6 +373,8 @@ const confirmRecording = async () => {
                     qid: props.question.qid,
                     answerId: props.question.qid, // 使用qid作为answerId
                     answerContent: result.data.audioPath,
+                    reviewContent: "",
+                    score: 0,
                 },
             ]);
 
