@@ -6,20 +6,16 @@
                     <img src="/img/logo.png" alt="Logo" class="logo" />
                 </div>
                 <div class="nav-right">
-                    <el-menu
-                        :default-active="activeMenu"
-                        class="nav-menu"
-                        mode="horizontal"
-                        :ellipsis="false"
-                        @select="handleMenuSelect">
+                    <el-menu :default-active="activeMenu" class="nav-menu" mode="horizontal" :ellipsis="false">
                         <el-menu-item index="schedule" class="main-menu-item">排课中心</el-menu-item>
                         <el-sub-menu index="info">
-                            <template #title><el-avatar :size="36" :src="userInfo.avatar" /></template>
+                            <template #title>
+                                <el-avatar
+                                    :size="36"
+                                    :src="userInfo.sex == 'M' ? '/img/avatar_m.png' : '/img/avatar_f.png'" />
+                            </template>
                             <!-- 移动端菜单项 -->
-                            <el-menu-item
-                                index="mobile-schedule"
-                                class="mobile-menu-item"
-                                @click="handleMenuSelect('schedule')">
+                            <el-menu-item index="mobile-schedule" class="mobile-menu-item">
                                 <el-icon><Calendar /></el-icon>
                                 排课中心
                             </el-menu-item>
@@ -35,15 +31,27 @@
                 <el-row :gutter="24" class="full-width" style="margin: 0">
                     <el-col :span="24" :lg="18">
                         <!-- 左侧内容区 主体业务-->
-                        <el-card class="content-left">
-                            <div class="content-left-body">
-                                <!-- 动态左侧内容组件 -->
-                                <component :is="leftComponent" />
-                            </div>
+                        <el-card class="content-left" shadow="never">
+                            <component :is="leftComponent" />
                         </el-card>
                     </el-col>
 
                     <el-col :span="24" :lg="6" class="content-right">
+                        <!-- 用户信息卡片 -->
+                        <el-card class="user-info-card" shadow="never">
+                            <div class="user-info-header">
+                                <el-avatar
+                                    :size="60"
+                                    :src="userInfo.sex == 'M' ? '/img/avatar_m.png' : '/img/avatar_f.png'" />
+                                <div class="user-primary-info">
+                                    <div class="name-line">
+                                        <h3 class="nickname">{{ userInfo.nickname }} 老师</h3>
+                                    </div>
+                                    <div class="details-line"></div>
+                                </div>
+                            </div>
+                        </el-card>
+
                         <!-- 动态右侧内容组件 -->
                         <div class="content-right-body">
                             <component :is="rightComponent" ref="rightComponentRef" />
@@ -56,115 +64,80 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, provide } from "vue";
-import { useRouter } from "vue-router";
+import { ref, computed, onMounted, provide, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useAuthStore } from "@/stores/auth";
+import { School, Document, Calendar, SwitchButton, User, Location } from "@element-plus/icons-vue";
 
 // 导入子组件
 import ScheduleLeftContent from "@/views/Details/components/ScheduleLeftContent.vue";
 import ScheduleRightContent from "@/views/Details/components/ScheduleRightContent.vue";
 
-// 常量定义
-const MENU_KEYS = {
-    SCHEDULE: "schedule",
-    MOBILE_SCHEDULE: "mobile-schedule",
-    LOGOUT: "logout",
-} as const;
+const router = useRouter();
+const route = useRoute();
+const authStore = useAuthStore();
 
-const DEFAULT_AVATAR = "https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png";
+// 响应式数据
+const activeMenu = ref("schedule");
+const rightComponentRef = ref();
+
+// 用户信息
+const userInfo = computed(() => {
+    return {
+        nickname: authStore.userInfo?.nickname || "老师",
+        sex: authStore.userInfo?.sex || "M",
+        school: authStore.userInfo?.school || "-",
+        grade: authStore.userInfo?.graduate || "-",
+        sopname: authStore.userInfo?.sopname || "-",
+    };
+});
+
+// 刷新右侧组件数据的方法
+const refreshRightContent = async () => {
+    try {
+        if (rightComponentRef.value?.refreshSummary) {
+            await rightComponentRef.value.refreshSummary();
+        }
+    } catch (error) {
+        console.error("刷新右侧内容失败:", error);
+    }
+};
+
+// 通过 provide 提供刷新方法
+provide("refreshRightContent", refreshRightContent);
 
 // 组件映射配置
-const COMPONENT_MAP: Record<string, { left: any; right: any }> = {
-    [MENU_KEYS.SCHEDULE]: {
+const componentMap: Record<string, any> = {
+    schedule: {
         left: ScheduleLeftContent,
         right: ScheduleRightContent,
     },
 };
 
-// 组合式函数
-const useMainView = () => {
-    const router = useRouter();
-    const authStore = useAuthStore();
+// 计算当前显示的组件
+const leftComponent = computed(() => {
+    return componentMap[activeMenu.value]?.left || ScheduleLeftContent;
+});
 
-    // 响应式数据
-    const activeMenu = ref<string>(MENU_KEYS.SCHEDULE);
-    const rightComponentRef = ref();
+const rightComponent = computed(() => {
+    return componentMap[activeMenu.value]?.right || ScheduleRightContent;
+});
 
-    // 用户信息
-    const userInfo = computed(() => ({
-        avatar: authStore.userInfo?.avatar || DEFAULT_AVATAR,
-        nickname: authStore.userInfo?.nickname || "老师",
-        school: authStore.userInfo?.school || "-",
-        grade: authStore.userInfo?.graduate || "-",
-    }));
+const handleLogout = async () => {
+    try {
+        await ElMessageBox.confirm("确定要退出登录吗？", "提示", {
+            confirmButtonText: "确定",
+            cancelButtonText: "取消",
+            type: "warning",
+        });
 
-    // 计算当前显示的组件
-    const leftComponent = computed(
-        () => COMPONENT_MAP[activeMenu.value as keyof typeof COMPONENT_MAP]?.left || ScheduleLeftContent
-    );
-
-    const rightComponent = computed(
-        () => COMPONENT_MAP[activeMenu.value as keyof typeof COMPONENT_MAP]?.right || ScheduleRightContent
-    );
-
-    // 刷新右侧组件数据的方法
-    const refreshRightContent = async () => {
-        try {
-            if (rightComponentRef.value?.refreshSummary) {
-                await rightComponentRef.value.refreshSummary();
-            }
-        } catch (error) {
-            console.error("刷新右侧内容失败:", error);
-        }
-    };
-
-    // 方法
-    const handleMenuSelect = (key: string) => {
-        activeMenu.value = key;
-    };
-
-    const handleLogout = async () => {
-        try {
-            await ElMessageBox.confirm("确定要退出登录吗？", "提示", {
-                confirmButtonText: "确定",
-                cancelButtonText: "取消",
-                type: "warning",
-            });
-
-            await authStore.logout(router);
-            ElMessage.success("退出成功");
-        } catch {
-            // 用户取消登出
-        }
-    };
-
-    return {
-        activeMenu,
-        rightComponentRef,
-        userInfo,
-        leftComponent,
-        rightComponent,
-        refreshRightContent,
-        handleMenuSelect,
-        handleLogout,
-    };
+        await authStore.logout(router);
+        ElMessage.success("退出成功");
+    } catch {
+        // 用户取消登出
+    }
 };
-
-// 使用组合式函数
-const {
-    activeMenu,
-    rightComponentRef,
-    userInfo,
-    leftComponent,
-    rightComponent,
-    refreshRightContent,
-    handleMenuSelect,
-    handleLogout,
-} = useMainView();
-
-// 通过 provide 提供刷新方法
-provide("refreshRightContent", refreshRightContent);
 </script>
 
 <style scoped lang="scss">
@@ -172,13 +145,11 @@ provide("refreshRightContent", refreshRightContent);
     height: 100vh;
     display: flex;
     flex-direction: column;
-    background: #f5f7fa;
+    background: linear-gradient(to bottom, #d7e4f7, #ffffff);
     overflow-x: hidden;
     max-width: 100%;
 }
 .top-nav {
-    background: white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -193,6 +164,11 @@ provide("refreshRightContent", refreshRightContent);
     .nav-menu {
         border-bottom: none;
         background: transparent;
+
+        // 统一子菜单和菜单项的悬停背景色
+        :deep(.el-sub-menu__title:hover) {
+            background-color: transparent !important;
+        }
     }
     .nav-right {
         padding-right: 24px;
@@ -204,6 +180,8 @@ provide("refreshRightContent", refreshRightContent);
     padding: 1.75rem 1rem;
 
     .content-left {
+        background-color: #f6f9fc;
+        border-radius: 1rem;
         min-height: calc(100vh - 112px); // 减去header和padding
 
         :deep(.el-card__body) {
@@ -219,24 +197,58 @@ provide("refreshRightContent", refreshRightContent);
         gap: 20px;
 
         .user-info-card {
+            background-color: transparent;
+            border: none;
+            box-shadow: none;
+
             :deep(.el-card__body) {
+                padding: 10px;
+            }
+
+            .user-info-header {
                 display: flex;
                 align-items: center;
-                justify-content: flex-start;
-                padding: 24px;
                 gap: 16px;
             }
 
-            .user-details h3 {
-                margin: 0 0 8px 0;
-                color: #303133;
-                font-size: 18px;
+            .user-primary-info {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
             }
 
-            .user-subtitle {
-                margin: 4px 0;
-                color: #909399;
-                font-size: 14px;
+            .name-line {
+                display: flex;
+                align-items: baseline;
+                gap: 8px;
+
+                .nickname {
+                    margin: 0;
+                    color: #303133;
+                    font-size: 18px;
+                    font-weight: 600;
+                }
+            }
+
+            .details-line {
+                display: flex;
+                align-items: center;
+                background-clip: padding-box;
+                -webkit-background-clip: padding-box;
+
+                .info-item {
+                    color: #87888b;
+                    font-size: 12px;
+                    font-weight: 500;
+                }
+
+                .divider {
+                    height: 16px;
+                    width: 1px;
+                    background-color: #e0e3e6;
+                    margin: 0 12px;
+                    box-shadow: inset 0.5px 0 0 #d4d7da;
+                }
             }
         }
     }
@@ -478,21 +490,7 @@ provide("refreshRightContent", refreshRightContent);
 
                 .user-info-card {
                     :deep(.el-card__body) {
-                        flex-direction: column;
                         padding: 20px;
-                        gap: 12px;
-                    }
-
-                    .user-details {
-                        margin-top: 0;
-
-                        h3 {
-                            font-size: 16px;
-                        }
-
-                        .user-subtitle {
-                            font-size: 13px;
-                        }
                     }
                 }
             }

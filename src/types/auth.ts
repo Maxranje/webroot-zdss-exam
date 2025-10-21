@@ -15,6 +15,7 @@ export interface UserInfo {
     roleType: number;
     uid: number;
     avatar: string;
+    sex: string;
     school: string;
     graduate: string;
     sopname: string;
@@ -42,4 +43,3 @@ export interface ApiResponse<T = any> {
     msg: string;
     data: T;
 }
-

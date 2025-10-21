@@ -10,9 +10,9 @@ interface FullCalendarEvent {
 
 // 状态映射
 const STATE_MAP: Record<number, string> = {
-    1: "进行中",
-    2: "已完成",
-    3: "已结转",
+    1: "锁课时",
+    2: "未进行",
+    3: "已完成",
 };
 
 /**

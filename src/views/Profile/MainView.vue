@@ -16,7 +16,11 @@
                         <el-menu-item index="abroad" class="main-menu-item">留学中心</el-menu-item>
                         <el-menu-item index="exam" class="main-menu-item">模考中心</el-menu-item>
                         <el-sub-menu index="info">
-                            <template #title><el-avatar :size="36" :src="userInfo.avatar" /></template>
+                            <template #title>
+                                <el-avatar
+                                    :size="36"
+                                    :src="userInfo.sex == 'M' ? '/img/avatar_m.png' : '/img/avatar_f.png'" />
+                            </template>
                             <!-- 移动端菜单项 -->
                             <el-menu-item
                                 index="mobile-abroad"
@@ -60,7 +64,9 @@
                         <!-- 用户信息卡片 -->
                         <el-card class="user-info-card" shadow="never">
                             <div class="user-info-header">
-                                <el-avatar :size="60" :src="userInfo.avatar" />
+                                <el-avatar
+                                    :size="60"
+                                    :src="userInfo.sex == 'M' ? '/img/avatar_m.png' : '/img/avatar_f.png'" />
                                 <div class="user-primary-info">
                                     <div class="name-line">
                                         <h3 class="nickname">{{ userInfo.nickname }}</h3>
@@ -109,16 +115,20 @@ const activeMenu = ref("schedule");
 const rightComponentRef = ref();
 
 // 监听路由参数变化
-watch(() => route.query.tab, (newTab) => {
-    if (newTab && ["schedule", "abroad", "exam"].includes(newTab as string)) {
-        activeMenu.value = newTab as string;
-    }
-}, { immediate: true });
+watch(
+    () => route.query.tab,
+    newTab => {
+        if (newTab && ["schedule", "abroad", "exam"].includes(newTab as string)) {
+            activeMenu.value = newTab as string;
+        }
+    },
+    { immediate: true }
+);
 
 // 用户信息
 const userInfo = computed(() => {
     return {
-        avatar: authStore.userInfo?.avatar || "https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png",
+        sex: authStore.userInfo?.sex || "M",
         nickname: authStore.userInfo?.nickname || "同学",
         school: authStore.userInfo?.school || "-",
         grade: authStore.userInfo?.graduate || "-",
@@ -170,11 +180,11 @@ const handleMenuSelect = (key: string) => {
     // 更新当前激活的菜单项，组件会通过计算属性自动切换左右内容
     activeMenu.value = key;
     // 更新URL参数
-    router.push({ 
-        query: { 
+    router.push({
+        query: {
             ...route.query,
-            tab: key 
-        } 
+            tab: key,
+        },
     });
 };
 
@@ -293,7 +303,7 @@ const handleLogout = async () => {
                 .info-item {
                     color: #87888b;
                     font-size: 12px;
-                    font-weight: 500;;
+                    font-weight: 500;
                 }
 
                 .divider {

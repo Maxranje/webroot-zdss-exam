@@ -1,6 +1,10 @@
 <template>
     <div class="schedule-stats">
-        <el-card class="stat-card gradient-card-schedule" shadow="hover" v-loading="loadingScheduleStats">
+        <el-card
+            class="stat-card gradient-card-schedule"
+            shadow="hover"
+            v-loading="loadingScheduleStats"
+            :body-style="{ padding: '0' }">
             <div class="stat-icon">
                 <el-icon size="24"><Calendar /></el-icon>
             </div>
@@ -10,7 +14,11 @@
             </div>
         </el-card>
 
-        <el-card class="stat-card gradient-card-schedule-2" shadow="hover" v-loading="loadingScheduleStats">
+        <el-card
+            class="stat-card gradient-card-schedule-2"
+            shadow="hover"
+            v-loading="loadingScheduleStats"
+            :body-style="{ padding: '0' }">
             <div class="stat-icon">
                 <el-icon size="24"><Check /></el-icon>
             </div>
@@ -20,7 +28,11 @@
             </div>
         </el-card>
 
-        <el-card class="stat-card gradient-card-schedule-3" shadow="hover" v-loading="loadingScheduleStats">
+        <el-card
+            class="stat-card gradient-card-schedule-3"
+            shadow="hover"
+            v-loading="loadingScheduleStats"
+            :body-style="{ padding: '0' }">
             <div class="stat-icon">
                 <el-icon size="24"><Clock /></el-icon>
             </div>
@@ -31,7 +43,7 @@
         </el-card>
 
         <!-- 近期课程 -->
-        <el-card class="upcoming-card" shadow="hover" v-loading="loadingScheduleStats">
+        <el-card class="upcoming-card" shadow="never" v-loading="loadingScheduleStats">
             <template #header>
                 <h4>当周临近课程提醒</h4>
             </template>
@@ -46,7 +58,7 @@
                     </div>
                     <div class="course-info">
                         <h5>{{ course.title }}</h5>
-                        <p class="teacher">{{ course.name }}</p>
+                        <p class="teacher">{{ course.teacher }}</p>
                     </div>
                     <div class="course-status">
                         <el-tag :type="course.isSoon == 1 ? 'warning' : 'info'" size="small">
@@ -71,123 +83,69 @@ import { ref, onMounted } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { ElMessage } from "element-plus";
 
-// 类型定义
+// 定义课程类型
 interface Course {
     title: string;
-    name: string;
     teacher: string;
     time: string;
     date: string;
     isSoon: number;
 }
-
-interface ScheduleStats {
+// 排课统计数据
+interface scheduleStats {
     lastMonthTotal: string;
     currentMonthTotal: string;
     nextMonthTotal: string;
     weekScheduleList: Course[];
 }
 
-interface ApiResponse {
-    status: number;
-    data: {
-        last_month_total?: string;
-        current_month_total?: string;
-        next_month_total?: string;
-        week_schedule_list?: Array<{
-            title: string;
-            teacher: string;
-            time: string;
-            date: string;
-            is_soon: number;
-        }>;
-    };
-    msg?: string;
-}
+// 获取认证 store
+const authStore = useAuthStore();
 
-// 常量定义
-const COURSE_STATUS = {
-    SOON: 1,
-    PENDING: 0,
-} as const;
+// 加载状态
+const loadingScheduleStats = ref(false);
 
-const DEFAULT_STATS: ScheduleStats = {
-    lastMonthTotal: "-",
-    currentMonthTotal: "-",
-    nextMonthTotal: "-",
+// 预先定义
+
+const scheduleStats = ref<scheduleStats>({
+    lastMonthTotal: "",
+    currentMonthTotal: "",
+    nextMonthTotal: "",
     weekScheduleList: [],
-};
+});
 
-// 组合式函数
-const useScheduleRightContent = () => {
-    const authStore = useAuthStore();
-
-    // 响应式数据
-    const loadingScheduleStats = ref(false);
-    const scheduleStats = ref<ScheduleStats>({ ...DEFAULT_STATS });
-
-    // 工具函数
-    const transformCourseData = (course: any): Course => ({
-        title: course.title,
-        name: course.teacher, // 使用 teacher 作为 name
-        teacher: course.teacher,
-        time: course.time,
-        date: course.date,
-        isSoon: course.is_soon,
-    });
-
-    const handleApiResponse = (result: ApiResponse) => {
+// 获取排课统计数据
+const fetchScheduleStats = async () => {
+    loadingScheduleStats.value = true;
+    try {
+        const result = await authStore.fetchAuthReq("/mapi/napi/schedule_tsummary", "GET");
         if (result.status === 0) {
-            scheduleStats.value = {
-                lastMonthTotal: result.data.last_month_total || DEFAULT_STATS.lastMonthTotal,
-                currentMonthTotal: result.data.current_month_total || DEFAULT_STATS.currentMonthTotal,
-                nextMonthTotal: result.data.next_month_total || DEFAULT_STATS.nextMonthTotal,
-                weekScheduleList:
-                    result.data.week_schedule_list?.map(transformCourseData) || DEFAULT_STATS.weekScheduleList,
-            };
+            scheduleStats.value.lastMonthTotal = result.data.last_month_total || "0";
+            scheduleStats.value.currentMonthTotal = result.data.current_month_total || "0";
+            scheduleStats.value.nextMonthTotal = result.data.next_month_total || "0";
+            if (result.data.week_schedule_list) {
+                scheduleStats.value.weekScheduleList = result.data.week_schedule_list.map((course: any) => ({
+                    title: course.title,
+                    teacher: course.teacher,
+                    time: course.time,
+                    date: course.date,
+                    isSoon: course.is_soon,
+                }));
+            }
         } else {
-            throw new Error(result.msg || "获取排课统计失败");
+            ElMessage.error(result.msg || "获取排课统计失败");
         }
-    };
-
-    // 主要方法
-    const fetchScheduleStats = async () => {
-        loadingScheduleStats.value = true;
-        try {
-            const result = (await authStore.fetchAuthReq("/mapi/napi/schedule_tsummary", "GET")) as ApiResponse;
-            handleApiResponse(result);
-        } catch (error) {
-            console.error("获取排课统计失败:", error);
-            ElMessage.error("获取排课统计失败");
-        } finally {
-            loadingScheduleStats.value = false;
-        }
-    };
-
-    // 暴露刷新方法供父组件调用
-    const refreshSummary = async () => {
-        await fetchScheduleStats();
-    };
-
-    return {
-        loadingScheduleStats,
-        scheduleStats,
-        fetchScheduleStats,
-        refreshSummary,
-    };
+    } catch (error) {
+        console.error("获取排课统计失败:", error);
+        ElMessage.error("获取排课统计失败");
+    } finally {
+        loadingScheduleStats.value = false;
+    }
 };
-
-// 使用组合式函数
-const { loadingScheduleStats, scheduleStats, fetchScheduleStats, refreshSummary } = useScheduleRightContent();
 
 // 组件挂载时获取数据
 onMounted(() => {
     fetchScheduleStats();
-});
-
-// 暴露方法给父组件
-defineExpose({
-    refreshSummary,
 });
 </script>
 
@@ -200,15 +158,12 @@ defineExpose({
 
 .stat-card {
     border: none;
-    color: white;
-    transition: all 0.3s ease;
 
     &:hover {
         transform: translateY(-2px);
     }
 
     :deep(.el-card__body) {
-        padding: 20px;
         display: flex;
         align-items: center;
         gap: 16px;
@@ -227,43 +182,69 @@ defineExpose({
 
     .stat-content {
         .stat-number {
-            font-size: 24px;
             font-weight: bold;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .stat-label {
-            font-size: 14px;
+            font-weight: bold;
             opacity: 0.9;
         }
     }
 }
 
 .gradient-card-schedule {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-
+    background-image: url("/img/card_bg1.png");
+    background-size: cover;
+    background-position: center;
+    border-radius: 1rem;
+    color: #667eea;
+    padding: 0.85rem 2rem;
     &:hover {
         box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    .stat-icon {
+        background: rgba(102, 126, 234, 0.2);
     }
 }
 
 .gradient-card-schedule-2 {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-
+    background-image: url("/img/card_bg2.png");
+    background-size: cover;
+    background-position: center;
+    border-radius: 1rem;
+    color: #2d88c8;
+    padding: 0.85rem 2rem;
     &:hover {
-        box-shadow: 0 8px 25px rgba(245, 87, 108, 0.3);
+        box-shadow: 0 8px 25px rgba(32, 57, 79, 0.29);
+    }
+
+    .stat-icon {
+        background: rgba(90, 116, 181, 0.2);
     }
 }
 
 .gradient-card-schedule-3 {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-
+    background-image: url("/img/card_bg3.png");
+    background-size: cover;
+    background-position: center;
+    border-radius: 1rem;
+    color: #4facee;
+    padding: 0.85rem 2rem;
     &:hover {
         box-shadow: 0 8px 25px rgba(79, 172, 254, 0.3);
+    }
+
+    .stat-icon {
+        background: rgba(79, 172, 254, 0.2);
     }
 }
 
 .upcoming-card {
+    border-radius: 1rem;
+    background-color: #f6f9fc;
+    margin-top: 24px;
     :deep(.el-card__header) {
         h4 {
             margin: 0;
@@ -276,7 +257,7 @@ defineExpose({
             display: flex;
             align-items: center;
             padding: 12px 0;
-            border-bottom: 1px solid #f0f2f5;
+            border-bottom: 1px solid #ffffff;
             transition: all 0.3s ease;
 
             &:last-child {
@@ -335,7 +316,6 @@ defineExpose({
         align-items: center;
         padding: 40px 0;
         color: #909399;
-        font-size: 16px;
 
         .empty-icon {
             margin-bottom: 15px;
@@ -369,7 +349,7 @@ defineExpose({
 
         .stat-content {
             .stat-number {
-                font-size: 20px;
+                font-size: 13px;
             }
 
             .stat-label {
@@ -428,7 +408,7 @@ defineExpose({
 
         .stat-content {
             .stat-number {
-                font-size: 18px;
+                font-size: 12px;
             }
 
             .stat-label {

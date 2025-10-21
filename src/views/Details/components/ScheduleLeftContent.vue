@@ -11,7 +11,7 @@ import { ref } from "vue";
 import BaseCalendar from "@/components/BaseCalendar.vue";
 import { useAuthStore } from "@/stores/auth";
 
-// 类型定义
+// 定义日历事件的类型
 interface CalendarEvent {
     title: string;
     start: string;
@@ -24,157 +24,119 @@ interface CalendarEvent {
     };
 }
 
-interface EventRenderArg {
-    event: {
-        start: Date;
-        end?: Date;
-        extendedProps: {
-            teacher: string;
-            subject: string;
-            location: string;
-            state: number;
-        };
-    };
-}
+// 日历事件数据
+const calendarEvents = ref<CalendarEvent[]>([]);
+const defaultCalendarEvents = ref<CalendarEvent[]>([]);
 
-// 常量定义
-const EVENT_STATES = {
-    DEFAULT: 1,
-    COMPLETED: 2,
-    CANCELLED: 3,
-} as const;
+// BaseCalendar 实例引用
+const baseCalendar = ref<InstanceType<typeof BaseCalendar> | null>(null);
 
-const EVENT_COLORS = {
-    [EVENT_STATES.DEFAULT]: "#123456",
-    [EVENT_STATES.COMPLETED]: "#90EE90",
-    [EVENT_STATES.CANCELLED]: "#f6d5ba",
-} as const;
+// 获取auth store
+const authStore = useAuthStore();
 
-// 组合式函数
-const useScheduleLeftContent = () => {
-    const authStore = useAuthStore();
+// 获取日历数据的函数
+const fetchCalendarData = async () => {
+    try {
+        // 获取当前日历的可视范围
+        let startDate: string, endDate: string;
 
-    // 响应式数据
-    const calendarEvents = ref<CalendarEvent[]>([]);
-    const defaultCalendarEvents = ref<CalendarEvent[]>([]);
-    const baseCalendar = ref<InstanceType<typeof BaseCalendar> | null>(null);
-
-    // 工具函数
-    const getDateRange = () => {
         const calendarApi = baseCalendar.value?.getApi();
         if (calendarApi) {
             const view = calendarApi.view;
-            return {
-                startDate: view.activeStart.toISOString().split("T")[0],
-                endDate: view.activeEnd.toISOString().split("T")[0],
-            };
+            // 格式化为 YYYY-MM-DD 格式
+            startDate = view.activeStart.toISOString().split("T")[0];
+            endDate = view.activeEnd.toISOString().split("T")[0];
+        } else {
+            // 如果日历还未初始化，使用当前月份
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+            startDate = startOfMonth.toISOString().split("T")[0];
+            endDate = endOfMonth.toISOString().split("T")[0];
         }
 
-        // 如果日历还未初始化，使用当前月份
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-        return {
-            startDate: startOfMonth.toISOString().split("T")[0],
-            endDate: endOfMonth.toISOString().split("T")[0],
-        };
-    };
-
-    const updateCalendarEvents = (events: CalendarEvent[]) => {
-        const calendarApi = baseCalendar.value?.getApi();
-        if (calendarApi) {
-            calendarApi.removeAllEvents();
-            calendarApi.addEventSource(events);
-        }
-    };
-
-    const getEventBackgroundColor = (state: number): string => {
-        return EVENT_COLORS[state as keyof typeof EVENT_COLORS] || EVENT_COLORS[EVENT_STATES.DEFAULT];
-    };
-
-    const formatTimeRange = (start: Date, end?: Date): string => {
-        const startTime = start.toLocaleTimeString("zh-CN", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
+        // 调用认证请求接口
+        const result = await authStore.fetchAuthReq("/mapi/napi/calendar_teacher", "POST", {
+            start_date: startDate,
+            end_date: endDate,
         });
 
-        if (!end) return startTime;
-
-        const endTime = end.toLocaleTimeString("zh-CN", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-        });
-
-        return `${startTime}-${endTime}`;
-    };
-
-    // 主要方法
-    const fetchCalendarData = async () => {
-        try {
-            const { startDate, endDate } = getDateRange();
-
-            const result = await authStore.fetchAuthReq("/mapi/napi/calendar_teacher", "POST", {
-                start_date: startDate,
-                end_date: endDate,
-            });
-
-            if (result.status === 0) {
-                if (result.data.lists) {
-                    calendarEvents.value = result.data.lists;
-                    updateCalendarEvents(result.data.lists);
-                } else {
-                    calendarEvents.value = defaultCalendarEvents.value;
-                    updateCalendarEvents(calendarEvents.value);
-                }
+        if (result.status === 0) {
+            if (result.data.lists) {
+                calendarEvents.value = result.data.lists;
+                updateCalendarEvents(result.data.lists);
             } else {
-                throw new Error(result.msg || "获取日历数据失败");
+                calendarEvents.value = defaultCalendarEvents.value;
+                updateCalendarEvents(calendarEvents.value);
             }
-        } catch (error) {
-            console.error("获取日历数据失败:", error);
-            // 如果接口请求失败，使用默认数据
-            calendarEvents.value = defaultCalendarEvents.value;
-            updateCalendarEvents(calendarEvents.value);
+        } else {
+            throw new Error(result.msg || "获取日历数据失败");
         }
-    };
+    } catch (error) {
+        console.error("获取日历数据失败:", error);
+        // 如果接口请求失败，使用默认数据
+        calendarEvents.value = defaultCalendarEvents.value;
+        updateCalendarEvents(calendarEvents.value);
+    }
+};
 
-    const handleDatesSet = (dateInfo: any) => {
-        // 当日期范围发生变化时，重新获取数据
-        fetchCalendarData();
-    };
+// 更新日历事件
+const updateCalendarEvents = (events: CalendarEvent[]) => {
+    const calendarApi = baseCalendar.value?.getApi();
+    if (calendarApi) {
+        calendarApi.removeAllEvents();
+        calendarApi.addEventSource(events);
+    }
+};
 
-    const renderEventContent = (arg: EventRenderArg) => {
-        const { event } = arg;
-        const { teacher, subject, location, state } = event.extendedProps;
-        const timeRange = formatTimeRange(event.start, event.end);
-        const backgroundColor = getEventBackgroundColor(state);
+// 处理日期变化的函数
+const handleDatesSet = (dateInfo: any) => {
+    // 当日期范围发生变化时，重新获取数据
+    fetchCalendarData();
+};
 
-        return {
-            html: `
-                <div class="custom-event" style="background-color: ${backgroundColor}; width: 100%;">
-                    <div class="event-time">${timeRange}</div>
-                    <div class="event-teacher-subject">${subject} (${teacher})</div>
-                    <div class="event-location">${location}</div>
-                </div>
-            `,
-        };
-    };
+// 渲染事件内容的函数
+const renderEventContent = (arg: any) => {
+    const { event } = arg;
+    const { teacher, subject, location, state } = event.extendedProps;
+
+    // 格式化时间为 09:00-13:00 格式
+    const startTime = event.start.toLocaleTimeString("zh-CN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+    });
+    const endTime = event.end
+        ? event.end.toLocaleTimeString("zh-CN", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+          })
+        : "";
+    const timeRange = endTime ? `${startTime}-${endTime}` : startTime;
+
+    // 根据 state 设置背景颜色
+    const backgroundColor = getEventBackgroundColor(state);
+    const textColor = state == 1 ? "#ffffff" : "#1f2937";
 
     return {
-        calendarEvents,
-        defaultCalendarEvents,
-        baseCalendar,
-        fetchCalendarData,
-        handleDatesSet,
-        renderEventContent,
+        html: `
+            <div class="custom-event" style="background-color: ${backgroundColor}; width: 100%;">
+                <div class="event-time" style="color: ${textColor};">${timeRange}</div>
+                <div class="event-teacher-subject" style="color: ${textColor};">${subject} (${teacher})</div>
+                <div class="event-location " style="color: ${textColor};">${location}</div>
+            </div>
+        `,
     };
 };
 
-// 使用组合式函数
-const { calendarEvents, defaultCalendarEvents, baseCalendar, fetchCalendarData, handleDatesSet, renderEventContent } =
-    useScheduleLeftContent();
+// 根据状态获取背景颜色
+const getEventBackgroundColor = (state: number): string => {
+    if (state === 2) return "#bee1af"; // 浅绿色
+    if (state === 3) return "#F3E9DC"; // 浅棕色
+    return "#123456"; // 默认浅青色
+};
 </script>
 
 <style scoped lang="scss">

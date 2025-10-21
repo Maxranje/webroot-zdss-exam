@@ -159,13 +159,14 @@ const renderEventContent = (arg: any) => {
 
     // 根据 state 设置背景颜色
     const backgroundColor = getEventBackgroundColor(state);
+    const textColor = state == 1 ? "#ffffff" : "#1f2937";
 
     return {
         html: `
             <div class="custom-event" style="background-color: ${backgroundColor}; width: 100%;">
-                <div class="event-time">${timeRange}</div>
-                <div class="event-teacher-subject">${subject} (${teacher})</div>
-                <div class="event-location">${location}</div>
+                <div class="event-time" style="color: ${textColor};">${timeRange}</div>
+                <div class="event-teacher-subject" style="color: ${textColor};">${subject} (${teacher})</div>
+                <div class="event-location" style="color: ${textColor};">${location}</div>
             </div>
         `,
     };
@@ -173,8 +174,8 @@ const renderEventContent = (arg: any) => {
 
 // 根据状态获取背景颜色
 const getEventBackgroundColor = (state: number): string => {
-    if (state === 2) return "#90EE90"; // 浅绿色
-    if (state === 3) return "#f6d5ba"; // 浅棕色
+    if (state === 2) return "#bee1af"; // 浅绿色
+    if (state === 3) return "#F3E9DC"; // 浅棕色
     return "#123456"; // 默认浅青色
 };
 
