@@ -31,6 +31,10 @@
                         <el-icon><Document /></el-icon>
                         考试题数：{{ examResult?.questionTotal || 0 }}题
                     </span>
+                    <span class="meta-item" v-if="examResult?.currentLevel != '' && examResult?.type == 2">
+                        <el-icon><Document /></el-icon>
+                        最终难度: {{ examResult?.currentLevel }}
+                    </span>
                 </div>
             </div>
 
@@ -346,7 +350,7 @@ const fetchExamDetail = async () => {
             throw new Error(result?.msg || "获取考试详情失败");
         }
 
-        const { apiExam, questions, metas, spendTime, studentScore } = result.data;
+        const { apiExam, questions, metas, spendTime, studentScore, currentLevel } = result.data;
 
         // 从localStorage获取考试信息
         const storedExam = localStorage.getItem("examResult");
@@ -368,6 +372,7 @@ const fetchExamDetail = async () => {
             studentScore: studentScore || 0,
             studentSpendTime: spendTime || 0,
             questionTotal: questions?.length || 0,
+            currentLevel: currentLevel || "",
         };
     } catch (error: any) {
         console.error("获取考试详情失败:", error);
