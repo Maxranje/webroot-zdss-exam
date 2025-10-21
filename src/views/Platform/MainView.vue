@@ -137,7 +137,7 @@ const formRules = {
             required: true,
             message: "请选择",
             trigger: "change",
-            validator: (rule, value, callback) => {
+            validator: (rule: any, value: string, callback: any) => {
                 if (value && value !== "") {
                     callback();
                 } else {
