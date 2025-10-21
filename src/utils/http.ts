@@ -30,7 +30,7 @@ export const fetchAuthRequest = (getToken: () => string | null, onUnauthorized: 
         const response = await fetch(url, {
             method,
             headers,
-            body: body instanceof FormData ? body : (body ? JSON.stringify(body) : undefined),
+            body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
             credentials: "include",
         });
 
@@ -56,7 +56,7 @@ export const fetchApiRequest = async <T = any>(url: string, method: string, body
         method,
         headers,
         credentials: "include",
-        body: body instanceof FormData ? body : (body ? JSON.stringify(body) : undefined),
+        body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
     });
 
     return handleApiResponse<T>(response);

@@ -60,7 +60,7 @@ export const authGuard = async (
     next: NavigationGuardNext
 ) => {
     const authStore = useAuthStore();
-    console.log("authGuard", to.path);
+    console.log("authGuard", from.fullPath, to.fullPath);
     // 如果路由不需要认证，直接通过
     if (!to.meta?.requiresAuth) {
         return next();
@@ -71,7 +71,7 @@ export const authGuard = async (
 
     // 检查是否已登录
     if (!hasValidAuth) {
-        console.log("redirectToLogin");
+        console.log("authGurad redirectToLogin");
         return redirectToLogin(to, next);
     }
 
@@ -138,6 +138,16 @@ export const titleGuard = (to: RouteLocationNormalized, from: RouteLocationNorma
     // 设置页面标题
     if (to.meta?.title) {
         document.title = `${to.meta.title} - 中鼎教育平台`;
+    }
+
+    next();
+};
+
+// 过滤topath以/mapi开头的请求.
+export const filterGuard = (to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {
+    // 设置页面标题
+    if (to.path.startsWith("/mapi")) {
+        window.location.href = to.fullPath;
     }
 
     next();

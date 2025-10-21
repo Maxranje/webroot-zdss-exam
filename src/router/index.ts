@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { authGuard, loginGuard, titleGuard } from "./guards";
+import { filterGuard, authGuard, loginGuard, titleGuard } from "./guards";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -111,9 +111,10 @@ const router = createRouter({
     ],
 });
 
-// 注册路由守卫 - 调整顺序：先设置标题，再检查登录状态，最后验证权限
+// 注册路由守卫 - 调整顺序：先过滤, 在设置标题，再进行认证检查，最后处理登录重定向
+router.beforeEach(filterGuard); // 过滤以/mapi开头的请求
 router.beforeEach(titleGuard);
-router.beforeEach(loginGuard);
-router.beforeEach(authGuard);
+router.beforeEach(authGuard); // 先进行认证和权限检查
+router.beforeEach(loginGuard); // 后处理登录页面重定向
 
 export default router;
