@@ -207,6 +207,7 @@ interface ExamResult extends ExamItem {
     metas: MetaItem[];
     studentScore?: number;
     studentSpendTime?: number;
+    currentLevel?: string;
 }
 
 // 响应式数据
