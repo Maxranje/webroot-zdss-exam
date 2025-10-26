@@ -163,7 +163,7 @@ const renderEventContent = (arg: any) => {
 
     return {
         html: `
-            <div class="custom-event" style="background-color: ${backgroundColor}; width: 100%;">
+            <div class="custom-event" style="background-color: ${backgroundColor}; width: 100%;min-height:100%;">
                 <div class="event-time" style="color: ${textColor};">${timeRange}</div>
                 <div class="event-teacher-subject" style="color: ${textColor};">${subject} (${teacher})</div>
                 <div class="event-location" style="color: ${textColor};">${location}</div>

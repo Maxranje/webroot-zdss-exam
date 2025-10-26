@@ -23,6 +23,13 @@
                             </template>
                             <!-- 移动端菜单项 -->
                             <el-menu-item
+                                index="mobile-schedule"
+                                class="mobile-menu-item"
+                                @click="handleMenuSelect('schedule')">
+                                <el-icon><Calendar /></el-icon>
+                                排课中心
+                            </el-menu-item>
+                            <el-menu-item
                                 index="mobile-abroad"
                                 class="mobile-menu-item"
                                 @click="handleMenuSelect('abroad')">
@@ -35,13 +42,6 @@
                                 @click="handleMenuSelect('exam')">
                                 <el-icon><Document /></el-icon>
                                 模考中心
-                            </el-menu-item>
-                            <el-menu-item
-                                index="mobile-schedule"
-                                class="mobile-menu-item"
-                                @click="handleMenuSelect('schedule')">
-                                <el-icon><Calendar /></el-icon>
-                                排课中心
                             </el-menu-item>
                             <el-menu-item index="logout" @click="handleLogout">
                                 <el-icon><SwitchButton /></el-icon>

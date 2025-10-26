@@ -147,7 +147,9 @@ export const titleGuard = (to: RouteLocationNormalized, from: RouteLocationNorma
 export const filterGuard = (to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {
     // 设置页面标题
     if (to.path.startsWith("/mapi")) {
+        console.log("filterGuard", to.fullPath);
         window.location.href = to.fullPath;
+        return;
     }
 
     next();

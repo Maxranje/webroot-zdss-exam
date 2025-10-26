@@ -530,7 +530,7 @@ const handleLogout = async () => {
     border-radius: 8px;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 820px) {
     .main-content {
         flex-direction: column;
         padding: 20px;
@@ -554,46 +554,6 @@ const handleLogout = async () => {
     }
 }
 
-@media (max-width: 768px) {
-    .main-content {
-        padding: 16px;
-    }
-
-    .welcome-title {
-        font-size: 2rem;
-    }
-
-    .welcome-subtitle {
-        font-size: 1rem;
-    }
-
-    .feature-item {
-        font-size: 1rem;
-    }
-
-    .choice-container {
-        padding: 24px;
-    }
-
-    .choice-title {
-        font-size: 1.5rem;
-    }
-
-    .choice-card {
-        padding: 20px;
-    }
-
-    .card-icon {
-        width: 40px;
-        height: 40px;
-
-        svg {
-            width: 20px;
-            height: 20px;
-        }
-    }
-}
-
 @media (max-width: 480px) {
     .top-bar {
         padding: 0 16px;
@@ -605,26 +565,7 @@ const handleLogout = async () => {
     }
 
     .left-content {
-        padding: 16px 0;
-    }
-
-    .welcome-title {
-        font-size: 1.8rem;
-        margin-bottom: 12px;
-    }
-
-    .welcome-subtitle {
-        font-size: 0.9rem;
-        margin-bottom: 24px;
-    }
-
-    .feature-list {
-        gap: 12px;
-    }
-
-    .feature-item {
-        font-size: 0.9rem;
-        gap: 10px;
+        display: none;
     }
 
     .feature-icon {

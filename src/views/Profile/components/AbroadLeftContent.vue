@@ -179,11 +179,11 @@
                                                 <span class="item-title">{{ item.title }}</span>
                                                 <div class="item-actions">
                                                     <el-button
-                                                        v-if="item.downloadUrl"
+                                                        v-if="item.canDownload == 1"
                                                         type="primary"
                                                         size="small"
                                                         text
-                                                        @click="downloadFile(item)"
+                                                        @click="downloadFile(selectedService, item)"
                                                         :icon="Download">
                                                         下载附件
                                                     </el-button>
@@ -235,7 +235,9 @@
                                                             </el-icon>
                                                         </span>
                                                     </el-checkbox>
-                                                    <div v-if="item.studentCompleted == 1" class="completion-info">
+                                                    <div
+                                                        v-if="item.studentCompleted == 1 && item.teacherCompleted == 1"
+                                                        class="completion-info">
                                                         <span class="completion-time">
                                                             {{ item.studentCompletedTime }}
                                                         </span>
@@ -281,7 +283,7 @@ interface ChecklistItem {
     teacherCompletedBy?: string;
     studentCompleted: number;
     studentCompletedTime?: string;
-    downloadUrl?: string;
+    canDownload?: number;
 }
 
 interface ChecklistCategory {
@@ -456,13 +458,17 @@ const updateServiceProgress = () => {
     selectedService.value.pendingTasks = allItems.length - completedItems;
 };
 
-const downloadFile = (item: ChecklistItem) => {
-    if (!item.downloadUrl) {
-        ElMessage.warning("下载链接不可用");
+const downloadFile = async (service: Service, item: ChecklistItem) => {
+    if (item.canDownload != 1) {
+        ElMessage.warning("无法下载附件");
         return;
     }
-    ElMessage.info(`正在下载：${item.title}`);
-    window.open(item.downloadUrl, "_blank");
+    try {
+        window.open(`/mapi/napi/abroadplan_down?apackage_id=${service.id}&key=${item.key}`, "_blank");
+    } catch (error) {
+        console.error("下载失败:", error);
+        ElMessage.error("下载失败，请重试");
+    }
 };
 
 const toggleExpandAll = () => {
