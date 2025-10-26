@@ -1,7 +1,7 @@
 <template>
     <div class="writing-question">
         <div class="question-header">
-            <h3 class="question-title">{{ question.content }}</h3>
+            <h3 class="question-title" v-html="question.content"></h3>
         </div>
 
         <div class="writing-area">

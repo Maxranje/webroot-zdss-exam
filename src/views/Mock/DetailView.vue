@@ -237,7 +237,7 @@ const isFillBlankQuestion = (type: number) => {
 
 // 方法
 const handleBack = () => {
-    router.push("/profile");
+    router.push("/profile?tab=exam");
 };
 
 // 获取题型文本
