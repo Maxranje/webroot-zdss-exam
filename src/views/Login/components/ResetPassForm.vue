@@ -74,24 +74,24 @@ const resetRules = {
     username: [
         { required: true, message: "请输入用户名", trigger: "blur" },
         {
-            pattern: /^[0-9a-zA-Z,]{1,20}$/,
-            message: "用户名只能包含数字、英文或逗号，1-20个字符以内",
+            pattern: /^[0-9a-zA-Z,_\.]{1,20}$/,
+            message: "用户名只能包含数字、英文字母、逗号、句号以及下划线，1-20个字符以内",
             trigger: "blur",
         },
     ],
     oldPassword: [
         { required: true, message: "请输入旧密码", trigger: "blur" },
         {
-            pattern: /^[0-9a-zA-Z,]{6,20}$/,
-            message: "旧密码只能包含数字、英文或逗号，6-20个字符以内",
+            pattern: /^[0-9a-zA-Z,_\.]{6,20}$/,
+            message: "旧密码只能包含数字、英文字母、逗号、句号以及下划线，6-20个字符以内",
             trigger: "blur",
         },
     ],
     newPassword: [
         { required: true, message: "请输入新密码", trigger: "blur" },
         {
-            pattern: /^[0-9a-zA-Z,]{6,20}$/,
-            message: "新密码只能包含数字、英文或逗号，6-20个字符以内",
+            pattern: /^[0-9a-zA-Z,_\.]{6,20}$/,
+            message: "新密码只能包含数字、英文字母、逗号、句号以及下划线，6-20个字符以内",
             trigger: "blur",
         },
     ],

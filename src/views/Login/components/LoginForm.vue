@@ -70,16 +70,16 @@ const loginRules = {
     username: [
         { required: true, message: "请输入用户名", trigger: "blur" },
         {
-            pattern: /^[0-9a-zA-Z,]{1,20}$/,
-            message: "用户名只能包含数字、英文或逗号，1-20个字符以内",
+            pattern: /^[0-9a-zA-Z,_\.]{1,20}$/,
+            message: "用户名只能包含数字、英文字母、逗号、句号以及下划线，1-20个字符以内",
             trigger: "blur",
         },
     ],
     password: [
         { required: true, message: "请输入密码", trigger: "blur" },
         {
-            pattern: /^[0-9a-zA-Z,]{6,20}$/,
-            message: "密码只能包含数字、英文或逗号，6-20个字符以内",
+            pattern: /^[0-9a-zA-Z,_\.]{6,20}$/,
+            message: "密码只能包含数字、英文字母、逗号、句号以及下划线，6-20个字符以内",
             trigger: "blur",
         },
     ],

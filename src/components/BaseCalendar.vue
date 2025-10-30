@@ -220,7 +220,7 @@ const handleDateClick = (dateInfo: any) => {
     --fc-neutral-bg-color: #f8fafc;
     --fc-neutral-text-color: #475569;
     --fc-border-color: #e2e8f0;
-    --fc-today-bg-color: #f0f9ff;
+    --fc-today-bg-color: #d7e4f7;
     --fc-highlight-color: #e0f2fe;
     --fc-event-bg-color: #e0f2fe;
     --fc-event-border-color: #7dd3fc;
@@ -237,11 +237,11 @@ const handleDateClick = (dateInfo: any) => {
 }
 
 :deep(.fc-daygrid-day.fc-day-today) {
-    background-color: #f0f9ff !important;
+    background-color: #d7e4f7 !important;
 }
 
 :deep(.fc-timegrid-col.fc-day-today) {
-    background-color: #f0f9ff !important;
+    background-color: #d7e4f7 !important;
 }
 
 // 月视图格子高度放大一倍

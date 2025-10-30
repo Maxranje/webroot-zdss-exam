@@ -35,7 +35,8 @@
                                         size="large"
                                         class="form-select"
                                         style="width: 100%"
-                                        @change="handleSelectedIdChange">
+                                        @change="handleSelectedIdChange"
+                                        filterable>
                                         <el-option
                                             v-for="item in optionList"
                                             :key="item.id"
