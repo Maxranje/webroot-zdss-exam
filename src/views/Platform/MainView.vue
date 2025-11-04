@@ -32,6 +32,8 @@
                                         v-model="platformForm.selectedId"
                                         placeholder="请先选择类型"
                                         :disabled="!platformForm.type"
+                                        :multiple="platformForm.type == 'group'"
+                                        :multiple-limit="platformForm.type == 'group' ? 4 : 1"
                                         size="large"
                                         class="form-select"
                                         style="width: 100%"
@@ -55,7 +57,12 @@
                                     </el-button>
                                     <el-dropdown
                                         @command="handleExportCommand"
-                                        :disabled="!platformForm.type || !platformForm.selectedId"
+                                        :disabled="
+                                            !platformForm.type ||
+                                            (Array.isArray(platformForm.selectedId)
+                                                ? platformForm.selectedId.length === 0
+                                                : !platformForm.selectedId)
+                                        "
                                         style="width: 100%">
                                         <el-button
                                             type="warning"
@@ -86,7 +93,11 @@
                                 :is="baseCalendar"
                                 ref="baseCalendarView"
                                 :type="platformForm.type"
-                                :selected-id="platformForm.selectedId" />
+                                :selected-id="
+                                    Array.isArray(platformForm.selectedId)
+                                        ? platformForm.selectedId.join(',')
+                                        : platformForm.selectedId
+                                " />
                         </el-card>
                     </el-col>
                 </el-row>
@@ -109,7 +120,7 @@ interface PlatformOption {
 
 interface PlatformForm {
     type: string;
-    selectedId: string;
+    selectedId: string | string[];
 }
 
 const authStore = useAuthStore();
@@ -124,7 +135,7 @@ const searchLoading = ref(false);
 // 表单数据
 const platformForm = ref<PlatformForm>({
     type: "",
-    selectedId: "",
+    selectedId: [],
 });
 
 // 选项列表
@@ -138,8 +149,8 @@ const formRules = {
             required: true,
             message: "请选择",
             trigger: "change",
-            validator: (rule: any, value: string, callback: any) => {
-                if (value && value !== "") {
+            validator: (rule: any, value: string | string[], callback: any) => {
+                if (Array.isArray(value) ? value.length > 0 : value && value !== "") {
                     callback();
                 } else {
                     callback(new Error("请选择"));
@@ -152,14 +163,20 @@ const formRules = {
 // 处理选中ID变化
 const handleSelectedIdChange = () => {
     // 清除selectedId字段的验证错误
-    if (platformFormRef.value && platformForm.value.selectedId) {
+    if (
+        platformFormRef.value &&
+        (Array.isArray(platformForm.value.selectedId)
+            ? platformForm.value.selectedId.length > 0
+            : platformForm.value.selectedId)
+    ) {
         platformFormRef.value.clearValidate("selectedId");
     }
 };
 
 // 处理类型变化
 const handleTypeChange = async (value: string) => {
-    platformForm.value.selectedId = "";
+    // 根据类型设置初始值
+    platformForm.value.selectedId = value === "group" ? [] : "";
     optionList.value = [];
     await fetchOptions(value);
 };
@@ -188,9 +205,21 @@ const fetchOptions = async (type: string, keyword: string = "") => {
 // 处理表单提交
 const handleSubmit = async () => {
     try {
+        // 确保选择了类型
+        if (!platformForm.value.type) {
+            platformFormRef.value.validate();
+            return;
+        }
+
+        // 在提交前获取选项列表（如果列表为空）
+        if (optionList.value.length === 0) {
+            await fetchOptions(platformForm.value.type);
+        }
+
         // 确保选择了有效的ID
-        const isValid =
-            platformForm.value.type && platformForm.value.selectedId && platformForm.value.selectedId !== "";
+        const isValid = Array.isArray(platformForm.value.selectedId)
+            ? platformForm.value.selectedId.length > 0
+            : platformForm.value.selectedId && platformForm.value.selectedId !== "";
         if (!isValid) {
             // 手动触发表单验证
             platformFormRef.value.validate();
@@ -199,9 +228,14 @@ const handleSubmit = async () => {
 
         submitLoading.value = true;
 
+        // 处理多选情况，将数组转换为逗号分隔的字符串
+        const selectedId = Array.isArray(platformForm.value.selectedId)
+            ? platformForm.value.selectedId.join(",")
+            : platformForm.value.selectedId;
+
         if (baseCalendarView.value) {
             // 传递当前表单的类型和选中ID
-            await baseCalendarView.value.fetchCalendarData(platformForm.value.type, platformForm.value.selectedId);
+            await baseCalendarView.value.fetchCalendarData(platformForm.value.type, selectedId);
         }
     } catch (error) {
         console.error("提交失败:", error);
@@ -213,7 +247,12 @@ const handleSubmit = async () => {
 
 // 处理导出命令
 const handleExportCommand = async (command: string) => {
-    if (!platformForm.value.type || !platformForm.value.selectedId) {
+    if (
+        !platformForm.value.type ||
+        (Array.isArray(platformForm.value.selectedId)
+            ? platformForm.value.selectedId.length === 0
+            : !platformForm.value.selectedId)
+    ) {
         ElMessage.warning("请先选择类型和具体项目");
         return;
     }

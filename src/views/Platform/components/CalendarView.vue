@@ -85,7 +85,6 @@ const fetchCalendarData = async (forceType?: string, forceSelectedId?: string) =
             if (result.data.lists) {
                 calendarEvents.value = result.data.lists;
                 updateCalendarEvents(result.data.lists);
-                console.log("日历数据更新成功", result.data.lists);
             } else {
                 calendarEvents.value = [];
                 updateCalendarEvents([]);
@@ -176,6 +175,7 @@ const renderEventContent = (arg: any) => {
 const getEventBackgroundColor = (state: number): string => {
     if (state === 2) return "#bee1af"; // 浅绿色
     if (state === 3) return "#F3E9DC"; // 浅棕色
+    if (state === 4) return "#d3d3d3"; // 灰色
     return "#123456"; // 默认浅青色
 };
 

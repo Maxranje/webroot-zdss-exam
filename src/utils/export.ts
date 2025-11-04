@@ -13,6 +13,7 @@ const STATE_MAP: Record<number, string> = {
     1: "锁课时",
     2: "未进行",
     3: "已完成",
+    4: "未排课",
 };
 
 /**
