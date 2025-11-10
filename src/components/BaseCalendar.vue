@@ -84,6 +84,7 @@ const mergedOptions = computed(() => ({
     height: props.height,
     aspectRatio: props.aspectRatio,
     locale: "zh-cn",
+    firstDay: 1,
     buttonText: {
         today: "今天",
         month: "月",
